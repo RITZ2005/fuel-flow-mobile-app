@@ -1,11 +1,10 @@
-
 import React, { useState } from 'react';
 import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 
 interface AuthFormProps {
-  type: 'login' | 'signup' | 'reset';
+  type: 'login' | 'signup' | 'reset-password';
 }
 
 const AuthForm = ({ type }: AuthFormProps) => {
@@ -32,7 +31,7 @@ const AuthForm = ({ type }: AuthFormProps) => {
             title: type === 'login' ? 'Login successful' : 'Account created successfully',
             description: "Welcome to CNG Gas Booking System",
           });
-        } else if (type === 'reset') {
+        } else if (type === 'reset-password') {
           toast({
             title: 'Reset link sent',
             description: "Please check your email for password reset instructions",
@@ -54,7 +53,7 @@ const AuthForm = ({ type }: AuthFormProps) => {
     switch(type) {
       case 'login': return 'Login to Your Account';
       case 'signup': return 'Create a New Account';
-      case 'reset': return 'Reset Your Password';
+      case 'reset-password': return 'Reset Your Password';
       default: return '';
     }
   };
@@ -66,7 +65,7 @@ const AuthForm = ({ type }: AuthFormProps) => {
         <p className="text-slate-500 mt-2">
           {type === 'login' && "Welcome back! Enter your details to continue"}
           {type === 'signup' && "Fill in your information to create an account"}
-          {type === 'reset' && "Enter your email to receive a reset link"}
+          {type === 'reset-password' && "Enter your email to receive a reset link"}
         </p>
       </div>
 
@@ -97,7 +96,7 @@ const AuthForm = ({ type }: AuthFormProps) => {
           />
         </div>
         
-        {type !== 'reset' && (
+        {type !== 'reset-password' && (
           <div className="relative">
             <Lock className="absolute left-3 top-3.5 h-5 w-5 text-slate-400" />
             <input
@@ -106,7 +105,7 @@ const AuthForm = ({ type }: AuthFormProps) => {
               className="form-input pl-10 pr-10"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              required={type !== 'reset'}
+              required={type !== 'reset-password'}
             />
             <button 
               type="button"
@@ -140,7 +139,7 @@ const AuthForm = ({ type }: AuthFormProps) => {
           ) : null}
           {type === 'login' && 'Login'}
           {type === 'signup' && 'Sign Up'}
-          {type === 'reset' && 'Send Reset Link'}
+          {type === 'reset-password' && 'Send Reset Link'}
         </button>
       </form>
       
@@ -169,7 +168,7 @@ const AuthForm = ({ type }: AuthFormProps) => {
           </p>
         )}
         
-        {type === 'reset' && (
+        {type === 'reset-password' && (
           <button 
             className="text-cng-secondary font-medium"
             onClick={() => navigate('/login')}
