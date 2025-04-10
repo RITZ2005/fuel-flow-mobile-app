@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -105,7 +106,7 @@ const AuthForm = ({ type }: AuthFormProps) => {
               className="form-input pl-10 pr-10"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              required={type !== 'reset-password'}
+              required={type === 'login' || type === 'signup'}
             />
             <button 
               type="button"
