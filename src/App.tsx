@@ -13,6 +13,8 @@ import Dashboard from "./pages/Dashboard";
 import Stations from "./pages/Stations";
 import BookSlot from "./pages/BookSlot";
 import Bookings from "./pages/Bookings";
+import BookingDetails from "./pages/BookingDetails";
+import Vehicles from "./pages/Vehicles";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
@@ -36,6 +38,8 @@ const App = () => (
           <Route path="/stations" element={<Stations />} />
           <Route path="/book-slot/:stationId" element={<BookSlot />} />
           <Route path="/bookings" element={<Bookings />} />
+          <Route path="/booking-details/:id" element={<BookingDetails />} />
+          <Route path="/vehicles" element={<Vehicles />} />
           <Route path="/profile" element={<Profile />} />
           
           {/* 404 Route */}
