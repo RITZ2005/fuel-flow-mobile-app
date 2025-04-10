@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { GasPump, Calendar, Car, Bell, Plus } from 'lucide-react';
+import { Fuel, Calendar, Car, Bell, Plus } from 'lucide-react';
 import MobileLayout from '@/components/layout/MobileLayout';
 import BookingCard from '@/components/dashboard/BookingCard';
 
@@ -13,14 +13,26 @@ const Dashboard = () => {
     email: 'john.doe@example.com',
   });
   
-  const [bookings, setBookings] = useState([
+  // Update booking type to include 'cancelled' status
+  type BookingStatus = 'upcoming' | 'completed' | 'cancelled';
+  
+  type Booking = {
+    id: string;
+    stationName: string;
+    stationAddress: string;
+    date: string;
+    time: string;
+    status: BookingStatus;
+  };
+  
+  const [bookings, setBookings] = useState<Booking[]>([
     {
       id: '1',
       stationName: 'CNG Central Station',
       stationAddress: '123 Main St, City',
       date: 'Apr 12, 2025',
       time: '10:30 AM',
-      status: 'upcoming' as const,
+      status: 'upcoming',
     },
     {
       id: '2',
@@ -28,14 +40,14 @@ const Dashboard = () => {
       stationAddress: '456 Park Ave, City',
       date: 'Apr 10, 2025',
       time: '2:15 PM',
-      status: 'completed' as const,
+      status: 'completed',
     }
   ]);
   
   const cancelBooking = (id: string) => {
     setBookings(bookings.map(booking => 
       booking.id === id 
-        ? { ...booking, status: 'cancelled' as const } 
+        ? { ...booking, status: 'cancelled' } 
         : booking
     ));
   };
@@ -64,7 +76,7 @@ const Dashboard = () => {
             onClick={() => navigate('/stations')}
           >
             <div className="w-12 h-12 rounded-full bg-cng-light flex items-center justify-center mb-2">
-              <GasPump size={24} className="text-cng-primary" />
+              <Fuel size={24} className="text-cng-primary" />
             </div>
             <span className="text-sm font-medium">Find Station</span>
           </button>
