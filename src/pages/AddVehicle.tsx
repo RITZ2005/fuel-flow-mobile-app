@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Car, AlertCircle, GasPump } from 'lucide-react';
+import { Car, AlertCircle, Fuel } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -236,7 +236,7 @@ const AddVehicle = () => {
                   </>
                 ) : (
                   <>
-                    <GasPump className="mr-2 h-5 w-5" />
+                    <Fuel className="mr-2 h-5 w-5" />
                     Add Vehicle
                   </>
                 )}
