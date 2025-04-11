@@ -1,29 +1,17 @@
-
 import React, { useState, useEffect } from 'react';
 import { Search, MapPin, Filter } from 'lucide-react';
 import MobileLayout from '@/components/layout/MobileLayout';
 import StationCard from '@/components/stations/StationCard';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import type { Database } from '@/integrations/supabase/types';
 
-type Station = {
-  id: string;
-  name: string;
-  address: string;
-  city: string;
-  state: string;
-  open_time: string;
-  close_time: string;
-  rating: number | null;
-  latitude: number | null;
-  longitude: number | null;
-};
+type Station = Database['public']['Tables']['stations']['Row'];
 
 const Stations = () => {
-  const [searchQuery, setSearchQuery] = useState('');
   const [stations, setStations] = useState<Station[]>([]);
-  const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
+  const [filteredStations, setFilteredStations] = useState<Station[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
   
   useEffect(() => {
     const fetchStations = async () => {
@@ -34,113 +22,78 @@ const Stations = () => {
         
         if (error) {
           console.error('Error fetching stations:', error);
-          toast({
-            variant: "destructive",
-            title: "Error",
-            description: "Failed to load stations",
-          });
-        } else {
-          setStations(data || []);
+        } else if (data) {
+          setStations(data);
+          setFilteredStations(data);
         }
       } catch (error) {
-        console.error('Error:', error);
+        console.error('Error in fetchStations:', error);
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
     
     fetchStations();
-  }, [toast]);
+  }, []);
   
-  // Filter stations based on search query
-  const filteredStations = stations.filter(station => 
-    station.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    station.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    station.city.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-  
-  // Convert time format (for display)
-  const formatTime = (timeStr: string) => {
-    try {
-      const [hours, minutes] = timeStr.split(':');
-      const hour = parseInt(hours);
-      const ampm = hour >= 12 ? 'PM' : 'AM';
-      const hour12 = hour % 12 || 12;
-      return `${hour12}:${minutes} ${ampm}`;
-    } catch (e) {
-      return timeStr;
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const query = e.target.value.toLowerCase();
+    setSearchQuery(query);
+    
+    if (query.trim() === '') {
+      setFilteredStations(stations);
+    } else {
+      const filtered = stations.filter(
+        station => 
+          station.name.toLowerCase().includes(query) ||
+          station.address.toLowerCase().includes(query) ||
+          station.city.toLowerCase().includes(query)
+      );
+      setFilteredStations(filtered);
     }
   };
   
-  // Calculate distance (mock for now, would use geolocation in a real app)
-  const getDistance = (lat1: number | null, lon1: number | null) => {
-    if (!lat1 || !lon1) return 'Unknown';
-    // Mock distance for now
-    return `${(Math.random() * 10).toFixed(1)} km`;
-  };
-  
-  // Calculate available slots (mock, would fetch from time_slots table in a real implementation)
-  const getAvailableSlots = () => {
-    return Math.floor(Math.random() * 6); // 0-5 slots
-  };
-  
   return (
-    <MobileLayout title="Nearby Stations">
+    <MobileLayout>
       <div className="pt-2 pb-6">
-        <div className="flex items-center bg-white rounded-lg border border-slate-200 mb-4 overflow-hidden">
-          <div className="pl-3">
-            <Search size={18} className="text-slate-400" />
+        {/* Search Bar */}
+        <div className="relative mb-4">
+          <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+            <Search className="w-5 h-5 text-gray-400" />
           </div>
           <input
-            type="text"
+            type="search"
             placeholder="Search stations..."
-            className="flex-1 py-3 px-2 focus:outline-none text-sm"
+            className="block w-full p-3 pl-10 text-sm border border-gray-300 rounded-md bg-white focus:ring-cng-primary focus:border-cng-primary"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={handleSearch}
           />
-          <button className="p-3">
-            <Filter size={18} className="text-slate-400" />
+        </div>
+        
+        {/* Filter Options */}
+        <div className="flex justify-end items-center mb-4">
+          <button className="btn-secondary flex items-center text-sm">
+            <Filter className="w-4 h-4 mr-2" />
+            Filter
           </button>
         </div>
         
-        <div className="flex justify-between items-center mb-4">
-          <div className="flex items-center text-sm text-slate-500">
-            <MapPin size={14} className="mr-1" />
-            <span>Showing stations near your location</span>
-          </div>
-          <button className="text-cng-secondary text-sm font-medium">View Map</button>
-        </div>
-        
-        {loading ? (
-          <div className="flex justify-center py-8">
-            <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-cng-primary"></div>
-          </div>
+        {/* Stations List */}
+        {isLoading ? (
+          <div className="text-center">Loading stations...</div>
         ) : filteredStations.length > 0 ? (
           filteredStations.map(station => (
-            <StationCard 
+            <StationCard
               key={station.id}
               id={station.id}
               name={station.name}
-              address={`${station.address}, ${station.city}`}
-              distance={getDistance(station.latitude, station.longitude)}
-              rating={station.rating || 0}
-              openTime={formatTime(station.open_time)}
-              closeTime={formatTime(station.close_time)}
-              availableSlots={getAvailableSlots()}
+              address={station.address}
+              city={station.city}
+              rating={station.rating}
             />
           ))
         ) : (
-          <div className="card flex flex-col items-center justify-center py-8 text-center">
-            <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
-              <MapPin size={32} className="text-slate-400" />
-            </div>
-            <h3 className="font-medium mb-2">No stations found</h3>
-            <p className="text-slate-500 text-sm">
-              {searchQuery 
-                ? `No stations matching "${searchQuery}"` 
-                : "No stations available in your area"}
-            </p>
-          </div>
+          <div className="text-center">No stations found.</div>
         )}
       </div>
     </MobileLayout>

@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, User, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -15,6 +15,7 @@ const Signup = () => {
   
   const { signUp } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,27 +41,28 @@ const Signup = () => {
     }
     
     try {
-      const { error } = await signUp(email, password, fullName);
+      const { error: signUpError } = await signUp(email, password, fullName);
       
-      if (error) {
-        setError(error.message);
+      if (signUpError) {
+        setError(signUpError.message);
         toast({
           variant: "destructive",
           title: "Sign Up Failed",
-          description: error.message,
+          description: signUpError.message,
         });
       } else {
         toast({
           title: "Sign Up Successful",
           description: "Your account has been created",
         });
+        // Let the AuthContext handle redirect
       }
-    } catch (err) {
-      setError("An unexpected error occurred");
+    } catch (err: any) {
+      setError(err.message || "An unexpected error occurred");
       toast({
         variant: "destructive",
         title: "Sign Up Failed",
-        description: "An unexpected error occurred",
+        description: err.message || "An unexpected error occurred",
       });
     } finally {
       setIsLoading(false);
