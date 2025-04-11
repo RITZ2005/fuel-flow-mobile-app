@@ -5,8 +5,8 @@ import { ChevronRight } from 'lucide-react';
 interface ProfileItemProps {
   icon: React.ReactNode;
   title: string;
-  description?: string; // Added this prop
-  subtitle?: string;     // Added this prop for backward compatibility
+  description?: string;
+  subtitle?: string;
   onClick?: () => void;
   showChevron?: boolean;
 }

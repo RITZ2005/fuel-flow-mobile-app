@@ -1,238 +1,252 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Car, Plus } from 'lucide-react';
-import MobileLayout from '@/components/layout/MobileLayout';
-import { useToast } from '@/hooks/use-toast';
+import { FuelPump, Car, AlertCircle } from 'lucide-react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import type { Database } from '@/integrations/supabase/types';
+import { useToast } from '@/hooks/use-toast';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
 
 const AddVehicle = () => {
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  const { user } = useAuth();
-  
   const [name, setName] = useState('');
   const [make, setMake] = useState('');
   const [model, setModel] = useState('');
-  const [year, setYear] = useState<number | ''>('');
+  const [year, setYear] = useState<number | string>('');
   const [licensePlate, setLicensePlate] = useState('');
-  const [cngCapacity, setCngCapacity] = useState<number | ''>('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [cngCapacity, setCngCapacity] = useState<number | string>('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!name || !make || !model) {
-      toast({
-        variant: "destructive",
-        title: "Required Fields Missing",
-        description: "Please fill in all required fields",
-      });
-      return;
-    }
-    
-    if (!user) {
-      toast({
-        variant: "destructive",
-        title: "Authentication Error",
-        description: "You must be logged in to add a vehicle",
-      });
-      return;
-    }
-    
-    setIsSubmitting(true);
-    
-    try {
-      const { error } = await supabase
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  
+  const addVehicleMutation = useMutation(
+    async () => {
+      const user = supabase.auth.getUser();
+      const userId = user.data.user?.id;
+      
+      if (!userId) {
+        throw new Error("User not authenticated");
+      }
+      
+      const { data, error } = await supabase
         .from('vehicles')
         .insert([
           {
-            user_id: user.id,
-            name,
-            make,
-            model,
-            year: year ? Number(year) : null,
-            license_plate: licensePlate || null,
-            cng_capacity: cngCapacity ? Number(cngCapacity) : null,
+            user_id: userId,
+            name: name,
+            make: make,
+            model: model,
+            year: Number(year),
+            license_plate: licensePlate,
+            cng_capacity: Number(cngCapacity),
           },
         ]);
       
-      if (error) throw error;
+      if (error) {
+        throw new Error(error.message);
+      }
       
-      toast({
-        title: "Vehicle Added",
-        description: "Your vehicle has been added successfully",
-      });
-      
-      navigate('/vehicles');
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Error Adding Vehicle",
-        description: error.message || "An unexpected error occurred",
-      });
-    } finally {
-      setIsSubmitting(false);
+      return data;
+    },
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries(['vehicles']);
+        toast({
+          title: "Vehicle Added",
+          description: "Your vehicle has been added successfully.",
+        });
+        navigate('/vehicles');
+      },
+      onError: (error: any) => {
+        setError(error.message || "An unexpected error occurred");
+        toast({
+          variant: "destructive",
+          title: "Failed to Add Vehicle",
+          description: error.message || "An unexpected error occurred",
+        });
+      },
+      onSettled: () => {
+        setIsLoading(false);
+      },
     }
-  };
-
-  // Function to handle number input changes
-  const handleNumberChange = (
-    setter: React.Dispatch<React.SetStateAction<number | ''>>,
-    value: string
-  ) => {
-    if (value === '') {
-      setter('');
-    } else if (!isNaN(Number(value))) {
-      setter(Number(value));
+  );
+  
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError(null);
+    
+    if (!name || !make || !model || !year || !cngCapacity) {
+      setError("Please fill in all required fields");
+      setIsLoading(false);
+      return;
     }
+    
+    if (isNaN(Number(year)) || isNaN(Number(cngCapacity))) {
+      setError("Year and CNG Capacity must be valid numbers");
+      setIsLoading(false);
+      return;
+    }
+    
+    addVehicleMutation.mutate();
   };
   
   return (
-    <MobileLayout>
-      <div className="pt-2 pb-6">
-        {/* Back Button */}
-        <button 
-          className="mb-4 flex items-center text-cng-secondary"
-          onClick={() => navigate(-1)}
-        >
-          <ChevronLeft size={20} className="mr-1" />
-          Back
-        </button>
-        
-        <h1 className="text-2xl font-bold mb-6">Add New Vehicle</h1>
-        
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Name */}
-          <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-              Vehicle Name
-            </label>
-            <div className="mt-1">
-              <input
-                type="text"
-                id="name"
-                className="form-input"
-                placeholder="e.g., My Car"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-              />
+    <div className="min-h-screen bg-slate-50 py-6 flex flex-col justify-center sm:py-12">
+      <div className="relative py-3 sm:max-w-xl sm:mx-auto">
+        <div className="absolute inset-0 bg-gradient-to-r from-cng-primary to-cng-secondary shadow-lg transform -skew-y-6 sm:skew-y-0 sm:-rotate-6 sm:rounded-3xl"></div>
+        <div className="relative bg-white shadow-lg sm:rounded-3xl p-8">
+          <div className="flex justify-center mb-5">
+            <div className="w-16 h-16 rounded-full bg-cng-primary text-white flex items-center justify-center text-2xl font-bold">
+              <Car size={32} />
             </div>
           </div>
+          <h2 className="text-2xl font-bold text-gray-900 text-center mb-4">Add New Vehicle</h2>
           
-          {/* Make */}
-          <div>
-            <label htmlFor="make" className="block text-sm font-medium text-gray-700">
-              Make
-            </label>
-            <div className="mt-1">
-              <input
-                type="text"
-                id="make"
-                className="form-input"
-                placeholder="e.g., Toyota"
-                value={make}
-                onChange={(e) => setMake(e.target.value)}
-                required
-              />
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start">
+              <AlertCircle className="text-red-500 mr-2 h-5 w-5 mt-0.5" />
+              <span className="text-red-800 text-sm">{error}</span>
             </div>
-          </div>
+          )}
           
-          {/* Model */}
-          <div>
-            <label htmlFor="model" className="block text-sm font-medium text-gray-700">
-              Model
-            </label>
-            <div className="mt-1">
-              <input
-                type="text"
-                id="model"
-                className="form-input"
-                placeholder="e.g., Camry"
-                value={model}
-                onChange={(e) => setModel(e.target.value)}
-                required
-              />
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <Label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                Vehicle Name
+              </Label>
+              <div className="mt-1">
+                <Input
+                  id="name"
+                  name="name"
+                  type="text"
+                  placeholder="e.g., My Car"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                />
+              </div>
             </div>
-          </div>
-          
-          {/* Year */}
-          <div>
-            <label htmlFor="year" className="block text-sm font-medium text-gray-700">
-              Year (Optional)
-            </label>
-            <div className="mt-1">
-              <input
-                type="number"
-                id="year"
-                className="form-input"
-                placeholder="e.g., 2020"
-                value={year}
-                onChange={(e) => handleNumberChange(setYear, e.target.value)}
-              />
+            
+            <div>
+              <Label htmlFor="make" className="block text-sm font-medium text-gray-700">
+                Make
+              </Label>
+              <div className="mt-1">
+                <Input
+                  id="make"
+                  name="make"
+                  type="text"
+                  placeholder="e.g., Toyota"
+                  value={make}
+                  onChange={(e) => setMake(e.target.value)}
+                  required
+                />
+              </div>
             </div>
-          </div>
-          
-          {/* License Plate */}
-          <div>
-            <label htmlFor="licensePlate" className="block text-sm font-medium text-gray-700">
-              License Plate (Optional)
-            </label>
-            <div className="mt-1">
-              <input
-                type="text"
-                id="licensePlate"
-                className="form-input"
-                placeholder="e.g., ABC-123"
-                value={licensePlate}
-                onChange={(e) => setLicensePlate(e.target.value)}
-              />
+            
+            <div>
+              <Label htmlFor="model" className="block text-sm font-medium text-gray-700">
+                Model
+              </Label>
+              <div className="mt-1">
+                <Input
+                  id="model"
+                  name="model"
+                  type="text"
+                  placeholder="e.g., Camry"
+                  value={model}
+                  onChange={(e) => setModel(e.target.value)}
+                  required
+                />
+              </div>
             </div>
-          </div>
-          
-          {/* CNG Capacity */}
-          <div>
-            <label htmlFor="cngCapacity" className="block text-sm font-medium text-gray-700">
-              CNG Capacity (Optional)
-            </label>
-            <div className="mt-1">
-              <input
-                type="number"
-                id="cngCapacity"
-                className="form-input"
-                placeholder="e.g., 14"
-                value={cngCapacity}
-                onChange={(e) => handleNumberChange(setCngCapacity, e.target.value)}
-              />
+            
+            <div>
+              <Label htmlFor="year" className="block text-sm font-medium text-gray-700">
+                Year
+              </Label>
+              <div className="mt-1">
+                <Input
+                  id="year"
+                  name="year"
+                  type="number"
+                  placeholder="e.g., 2023"
+                  value={year}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setYear(value === '' ? '' : Number(value));
+                  }}
+                  required
+                />
+              </div>
             </div>
-          </div>
-          
-          {/* Submit Button */}
-          <div>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="btn-primary w-full flex justify-center items-center"
-            >
-              {isSubmitting ? (
-                <>
-                  <span className="inline-block h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></span>
-                  Adding Vehicle...
-                </>
-              ) : (
-                <>
-                  <Plus size={16} className="mr-2" />
-                  Add Vehicle
-                </>
-              )}
-            </button>
-          </div>
-        </form>
+            
+            <div>
+              <Label htmlFor="licensePlate" className="block text-sm font-medium text-gray-700">
+                License Plate (Optional)
+              </Label>
+              <div className="mt-1">
+                <Input
+                  id="licensePlate"
+                  name="licensePlate"
+                  type="text"
+                  placeholder="e.g., ABC-123"
+                  value={licensePlate}
+                  onChange={(e) => setLicensePlate(e.target.value)}
+                />
+              </div>
+            </div>
+            
+            <div>
+              <Label htmlFor="cngCapacity" className="block text-sm font-medium text-gray-700">
+                CNG Capacity (in Liters)
+              </Label>
+              <div className="mt-1 relative">
+                <Input
+                  id="cngCapacity"
+                  name="cngCapacity"
+                  type="number"
+                  placeholder="e.g., 60"
+                  value={cngCapacity}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setCngCapacity(value === '' ? '' : Number(value));
+                  }}
+                  required
+                />
+                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-500">
+                  L
+                </div>
+              </div>
+            </div>
+            
+            <div>
+              <Button
+                type="submit"
+                disabled={isLoading}
+                className="w-full flex justify-center"
+              >
+                {isLoading ? (
+                  <>
+                    <span className="inline-block h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></span>
+                    Adding Vehicle...
+                  </>
+                ) : (
+                  <>
+                    <FuelPump className="mr-2 h-5 w-5" />
+                    Add Vehicle
+                  </>
+                )}
+              </Button>
+            </div>
+          </form>
+        </div>
       </div>
-    </MobileLayout>
+    </div>
   );
 };
 
