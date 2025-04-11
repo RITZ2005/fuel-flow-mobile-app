@@ -1,14 +1,24 @@
 
 import { useEffect } from "react";
 import { useIsCapacitor } from "./use-capacitor";
-import { SplashScreen } from '@capacitor/splash-screen';
+
+// Try to import SplashScreen, but handle it gracefully if not available
+let SplashScreen: any = null;
+try {
+  // Dynamic import to avoid direct dependency at compile time
+  import('@capacitor/splash-screen').then(module => {
+    SplashScreen = module.SplashScreen;
+  });
+} catch (error) {
+  console.warn('Capacitor SplashScreen module not available', error);
+}
 
 export function useSplashScreen() {
   const isCapacitor = useIsCapacitor();
   
   useEffect(() => {
     const hideSplashScreen = async () => {
-      if (isCapacitor) {
+      if (isCapacitor && SplashScreen) {
         try {
           await SplashScreen.hide();
         } catch (error) {

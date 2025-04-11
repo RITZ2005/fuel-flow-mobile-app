@@ -5,9 +5,19 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useEffect } from "react";
-import { App as CapApp } from '@capacitor/app';
 import { useSplashScreen } from "./hooks/use-splash-screen";
 import { useIsCapacitor } from "./hooks/use-capacitor";
+
+// Try to import Capacitor App, but handle it gracefully if not available
+let CapApp: any = null;
+try {
+  // Dynamic import to avoid direct dependency at compile time
+  import('@capacitor/app').then(module => {
+    CapApp = module.App;
+  });
+} catch (error) {
+  console.warn('Capacitor App module not available', error);
+}
 
 // Pages
 import Login from "./pages/Login";
@@ -31,9 +41,9 @@ const App = () => {
   
   // Handle hardware back button in mobile apps
   useEffect(() => {
-    // Only run in mobile app environments
-    if (isCapacitor) {
-      const handleBackButton = CapApp.addListener('backButton', ({ canGoBack }) => {
+    // Only run in mobile app environments and if CapApp is available
+    if (isCapacitor && CapApp) {
+      const handleBackButton = CapApp.addListener('backButton', ({ canGoBack }: { canGoBack: boolean }) => {
         if (canGoBack) {
           window.history.back();
         } else {
