@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, User, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -13,9 +13,16 @@ const Signup = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
-  const { signUp } = useAuth();
+  const { signUp, user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      navigate('/dashboard');
+    }
+  }, [user, navigate]);
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,6 +51,7 @@ const Signup = () => {
       const { error: signUpError } = await signUp(email, password, fullName);
       
       if (signUpError) {
+        console.error('Signup error:', signUpError.message);
         setError(signUpError.message);
         toast({
           variant: "destructive",
@@ -55,9 +63,10 @@ const Signup = () => {
           title: "Sign Up Successful",
           description: "Your account has been created",
         });
-        // Let the AuthContext handle redirect
+        // Navigation is handled in the signUp function
       }
     } catch (err: any) {
+      console.error('Signup exception:', err.message);
       setError(err.message || "An unexpected error occurred");
       toast({
         variant: "destructive",

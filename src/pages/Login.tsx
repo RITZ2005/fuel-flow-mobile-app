@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -11,8 +11,16 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
-  const { signIn } = useAuth();
+  const { signIn, user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
+  
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      navigate('/dashboard');
+    }
+  }, [user, navigate]);
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,6 +37,7 @@ const Login = () => {
       const { error } = await signIn(email, password);
       
       if (error) {
+        console.error('Login error:', error.message);
         setError(error.message);
         toast({
           variant: "destructive",
@@ -40,8 +49,10 @@ const Login = () => {
           title: "Login Successful",
           description: "Welcome back!",
         });
+        // Navigation is handled in the signIn function
       }
-    } catch (err) {
+    } catch (err: any) {
+      console.error('Login exception:', err.message);
       setError("An unexpected error occurred");
       toast({
         variant: "destructive",

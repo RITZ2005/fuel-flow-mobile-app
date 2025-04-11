@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -25,6 +24,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // First set up the auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, currentSession) => {
+        console.log('Auth state changed:', event, currentSession?.user?.id);
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
         setLoading(false);
@@ -33,6 +33,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Then check for an existing session
     supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+      console.log('Initial session check:', currentSession?.user?.id);
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
       setLoading(false);
@@ -45,21 +46,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      console.log('Signing in with:', email);
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       
-      if (!error) {
+      if (!error && data.session) {
+        console.log('Sign in successful:', data.user?.id);
         navigate('/dashboard');
+      } else {
+        console.error('Sign in error:', error?.message);
       }
       
       return { error };
     } catch (error) {
+      console.error('Sign in exception:', error);
       return { error };
     }
   };
 
   const signUp = async (email: string, password: string, fullName: string) => {
     try {
-      const { error } = await supabase.auth.signUp({
+      console.log('Signing up with:', email, fullName);
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -69,17 +76,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         },
       });
       
-      if (!error) {
+      if (!error && data.user) {
+        console.log('Sign up successful:', data.user.id);
+        // With email confirmation disabled, we can navigate to dashboard
+        // Otherwise, show a message to confirm email
         navigate('/dashboard');
+      } else {
+        console.error('Sign up error:', error?.message);
       }
       
       return { error };
     } catch (error) {
+      console.error('Sign up exception:', error);
       return { error };
     }
   };
 
   const signOut = async () => {
+    console.log('Signing out');
     await supabase.auth.signOut();
     navigate('/login');
   };
