@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FuelPump, Car, AlertCircle } from 'lucide-react';
+import { Car, AlertCircle, GasPump } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -22,10 +22,10 @@ const AddVehicle = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  const addVehicleMutation = useMutation(
-    async () => {
-      const user = supabase.auth.getUser();
-      const userId = user.data.user?.id;
+  const addVehicleMutation = useMutation({
+    mutationFn: async () => {
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData.user?.id;
       
       if (!userId) {
         throw new Error("User not authenticated");
@@ -51,28 +51,26 @@ const AddVehicle = () => {
       
       return data;
     },
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries(['vehicles']);
-        toast({
-          title: "Vehicle Added",
-          description: "Your vehicle has been added successfully.",
-        });
-        navigate('/vehicles');
-      },
-      onError: (error: any) => {
-        setError(error.message || "An unexpected error occurred");
-        toast({
-          variant: "destructive",
-          title: "Failed to Add Vehicle",
-          description: error.message || "An unexpected error occurred",
-        });
-      },
-      onSettled: () => {
-        setIsLoading(false);
-      },
-    }
-  );
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vehicles'] });
+      toast({
+        title: "Vehicle Added",
+        description: "Your vehicle has been added successfully.",
+      });
+      navigate('/vehicles');
+    },
+    onError: (error: any) => {
+      setError(error.message || "An unexpected error occurred");
+      toast({
+        variant: "destructive",
+        title: "Failed to Add Vehicle",
+        description: error.message || "An unexpected error occurred",
+      });
+    },
+    onSettled: () => {
+      setIsLoading(false);
+    },
+  });
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,6 +91,7 @@ const AddVehicle = () => {
     
     addVehicleMutation.mutate();
   };
+  
   
   return (
     <div className="min-h-screen bg-slate-50 py-6 flex flex-col justify-center sm:py-12">
@@ -237,7 +236,7 @@ const AddVehicle = () => {
                   </>
                 ) : (
                   <>
-                    <FuelPump className="mr-2 h-5 w-5" />
+                    <GasPump className="mr-2 h-5 w-5" />
                     Add Vehicle
                   </>
                 )}
