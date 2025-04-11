@@ -6,6 +6,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useEffect } from "react";
 import { App as CapApp } from '@capacitor/app';
+import { useSplashScreen } from "./hooks/use-splash-screen";
+import { useIsCapacitor } from "./hooks/use-capacitor";
 
 // Pages
 import Login from "./pages/Login";
@@ -23,10 +25,14 @@ import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
 const App = () => {
+  // Hide splash screen when app starts
+  useSplashScreen();
+  const isCapacitor = useIsCapacitor();
+  
   // Handle hardware back button in mobile apps
   useEffect(() => {
     // Only run in mobile app environments
-    if (window.Capacitor) {
+    if (isCapacitor) {
       const handleBackButton = CapApp.addListener('backButton', ({ canGoBack }) => {
         if (canGoBack) {
           window.history.back();
@@ -41,7 +47,7 @@ const App = () => {
         handleBackButton.remove();
       };
     }
-  }, []);
+  }, [isCapacitor]);
   
   return (
     <QueryClientProvider client={queryClient}>

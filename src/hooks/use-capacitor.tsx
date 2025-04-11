@@ -7,7 +7,15 @@ export function useIsCapacitor() {
   useEffect(() => {
     // Check if we're running in a Capacitor native app
     const checkCapacitor = () => {
-      return window.Capacitor !== undefined;
+      try {
+        return typeof window !== 'undefined' && 
+               window !== null && 
+               'Capacitor' in window && 
+               window.Capacitor !== undefined;
+      } catch (e) {
+        console.log('Error checking for Capacitor:', e);
+        return false;
+      }
     };
     
     setIsCapacitor(checkCapacitor());

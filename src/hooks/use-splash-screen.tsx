@@ -1,12 +1,16 @@
 
 import { useEffect } from "react";
+import { useIsCapacitor } from "./use-capacitor";
+import { SplashScreen } from '@capacitor/splash-screen';
 
 export function useSplashScreen() {
+  const isCapacitor = useIsCapacitor();
+  
   useEffect(() => {
     const hideSplashScreen = async () => {
-      if (window.Capacitor && window.Capacitor.Plugins.SplashScreen) {
+      if (isCapacitor) {
         try {
-          await window.Capacitor.Plugins.SplashScreen.hide();
+          await SplashScreen.hide();
         } catch (error) {
           console.error("Error hiding splash screen:", error);
         }
@@ -19,5 +23,5 @@ export function useSplashScreen() {
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [isCapacitor]);
 }
