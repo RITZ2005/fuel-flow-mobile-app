@@ -9,7 +9,216 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      bookings: {
+        Row: {
+          booking_date: string
+          created_at: string | null
+          id: string
+          station_id: string
+          status: string
+          time_slot_id: string
+          updated_at: string | null
+          user_id: string
+          vehicle_id: string
+        }
+        Insert: {
+          booking_date: string
+          created_at?: string | null
+          id?: string
+          station_id: string
+          status?: string
+          time_slot_id: string
+          updated_at?: string | null
+          user_id: string
+          vehicle_id: string
+        }
+        Update: {
+          booking_date?: string
+          created_at?: string | null
+          id?: string
+          station_id?: string
+          status?: string
+          time_slot_id?: string
+          updated_at?: string | null
+          user_id?: string
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_station_id_fkey"
+            columns: ["station_id"]
+            isOneToOne: false
+            referencedRelation: "stations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_time_slot_id_fkey"
+            columns: ["time_slot_id"]
+            isOneToOne: false
+            referencedRelation: "time_slots"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          full_name: string | null
+          id: string
+          phone: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          full_name?: string | null
+          id: string
+          phone?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          full_name?: string | null
+          id?: string
+          phone?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      stations: {
+        Row: {
+          address: string
+          city: string
+          close_time: string
+          created_at: string | null
+          id: string
+          latitude: number | null
+          longitude: number | null
+          name: string
+          open_time: string
+          rating: number | null
+          state: string
+          updated_at: string | null
+        }
+        Insert: {
+          address: string
+          city: string
+          close_time: string
+          created_at?: string | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          name: string
+          open_time: string
+          rating?: number | null
+          state: string
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string
+          city?: string
+          close_time?: string
+          created_at?: string | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          name?: string
+          open_time?: string
+          rating?: number | null
+          state?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      time_slots: {
+        Row: {
+          booked_count: number
+          capacity: number
+          created_at: string | null
+          end_time: string
+          id: string
+          start_time: string
+          station_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          booked_count?: number
+          capacity?: number
+          created_at?: string | null
+          end_time: string
+          id?: string
+          start_time: string
+          station_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          booked_count?: number
+          capacity?: number
+          created_at?: string | null
+          end_time?: string
+          id?: string
+          start_time?: string
+          station_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "time_slots_station_id_fkey"
+            columns: ["station_id"]
+            isOneToOne: false
+            referencedRelation: "stations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vehicles: {
+        Row: {
+          cng_capacity: number | null
+          created_at: string | null
+          id: string
+          license_plate: string | null
+          make: string
+          model: string
+          name: string
+          updated_at: string | null
+          user_id: string
+          year: number | null
+        }
+        Insert: {
+          cng_capacity?: number | null
+          created_at?: string | null
+          id?: string
+          license_plate?: string | null
+          make: string
+          model: string
+          name: string
+          updated_at?: string | null
+          user_id: string
+          year?: number | null
+        }
+        Update: {
+          cng_capacity?: number | null
+          created_at?: string | null
+          id?: string
+          license_plate?: string | null
+          make?: string
+          model?: string
+          name?: string
+          updated_at?: string | null
+          user_id?: string
+          year?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

@@ -7,6 +7,8 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useEffect } from "react";
 import { useSplashScreen } from "./hooks/use-splash-screen";
 import { useIsCapacitor } from "./hooks/use-capacitor";
+import { AuthProvider } from "./contexts/AuthContext";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
 
 // Try to import Capacitor App, but handle it gracefully if not available
 let CapApp: any = null;
@@ -29,6 +31,7 @@ import BookSlot from "./pages/BookSlot";
 import Bookings from "./pages/Bookings";
 import BookingDetails from "./pages/BookingDetails";
 import Vehicles from "./pages/Vehicles";
+import AddVehicle from "./pages/AddVehicle";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
@@ -62,28 +65,31 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <Toaster />
-        <Sonner />
         <BrowserRouter>
-          <Routes>
-            {/* Auth Routes */}
-            <Route path="/" element={<Navigate to="/login" replace />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
-            
-            {/* App Routes */}
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/stations" element={<Stations />} />
-            <Route path="/book-slot/:stationId" element={<BookSlot />} />
-            <Route path="/bookings" element={<Bookings />} />
-            <Route path="/booking-details/:id" element={<BookingDetails />} />
-            <Route path="/vehicles" element={<Vehicles />} />
-            <Route path="/profile" element={<Profile />} />
-            
-            {/* 404 Route */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <AuthProvider>
+            <Toaster />
+            <Sonner />
+            <Routes>
+              {/* Auth Routes */}
+              <Route path="/" element={<Navigate to="/login" replace />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Signup />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              
+              {/* Protected App Routes */}
+              <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+              <Route path="/stations" element={<ProtectedRoute><Stations /></ProtectedRoute>} />
+              <Route path="/book-slot/:stationId" element={<ProtectedRoute><BookSlot /></ProtectedRoute>} />
+              <Route path="/bookings" element={<ProtectedRoute><Bookings /></ProtectedRoute>} />
+              <Route path="/booking-details/:id" element={<ProtectedRoute><BookingDetails /></ProtectedRoute>} />
+              <Route path="/vehicles" element={<ProtectedRoute><Vehicles /></ProtectedRoute>} />
+              <Route path="/add-vehicle" element={<ProtectedRoute><AddVehicle /></ProtectedRoute>} />
+              <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+              
+              {/* 404 Route */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>

@@ -1,51 +1,88 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, MapPin, Filter } from 'lucide-react';
 import MobileLayout from '@/components/layout/MobileLayout';
 import StationCard from '@/components/stations/StationCard';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+
+type Station = {
+  id: string;
+  name: string;
+  address: string;
+  city: string;
+  state: string;
+  open_time: string;
+  close_time: string;
+  rating: number | null;
+  latitude: number | null;
+  longitude: number | null;
+};
 
 const Stations = () => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [stations, setStations] = useState<Station[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
   
-  // Mock stations data
-  const [stations] = useState([
-    {
-      id: '1',
-      name: 'CNG Central Station',
-      address: '123 Main St, City',
-      distance: '2.5 km',
-      rating: 4.7,
-      openTime: '06:00 AM',
-      closeTime: '10:00 PM',
-      availableSlots: 5,
-    },
-    {
-      id: '2',
-      name: 'Green Fuel Station',
-      address: '456 Park Ave, City',
-      distance: '3.8 km',
-      rating: 4.5,
-      openTime: '07:00 AM',
-      closeTime: '11:00 PM',
-      availableSlots: 3,
-    },
-    {
-      id: '3',
-      name: 'EcoFill CNG Station',
-      address: '789 Lake Rd, City',
-      distance: '4.2 km',
-      rating: 4.2,
-      openTime: '05:30 AM',
-      closeTime: '09:30 PM',
-      availableSlots: 0,
-    },
-  ]);
+  useEffect(() => {
+    const fetchStations = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('stations')
+          .select('*');
+        
+        if (error) {
+          console.error('Error fetching stations:', error);
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to load stations",
+          });
+        } else {
+          setStations(data || []);
+        }
+      } catch (error) {
+        console.error('Error:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchStations();
+  }, [toast]);
   
   // Filter stations based on search query
   const filteredStations = stations.filter(station => 
     station.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    station.address.toLowerCase().includes(searchQuery.toLowerCase())
+    station.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    station.city.toLowerCase().includes(searchQuery.toLowerCase())
   );
+  
+  // Convert time format (for display)
+  const formatTime = (timeStr: string) => {
+    try {
+      const [hours, minutes] = timeStr.split(':');
+      const hour = parseInt(hours);
+      const ampm = hour >= 12 ? 'PM' : 'AM';
+      const hour12 = hour % 12 || 12;
+      return `${hour12}:${minutes} ${ampm}`;
+    } catch (e) {
+      return timeStr;
+    }
+  };
+  
+  // Calculate distance (mock for now, would use geolocation in a real app)
+  const getDistance = (lat1: number | null, lon1: number | null) => {
+    if (!lat1 || !lon1) return 'Unknown';
+    // Mock distance for now
+    return `${(Math.random() * 10).toFixed(1)} km`;
+  };
+  
+  // Calculate available slots (mock, would fetch from time_slots table in a real implementation)
+  const getAvailableSlots = () => {
+    return Math.floor(Math.random() * 6); // 0-5 slots
+  };
   
   return (
     <MobileLayout title="Nearby Stations">
@@ -74,18 +111,22 @@ const Stations = () => {
           <button className="text-cng-secondary text-sm font-medium">View Map</button>
         </div>
         
-        {filteredStations.length > 0 ? (
+        {loading ? (
+          <div className="flex justify-center py-8">
+            <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-cng-primary"></div>
+          </div>
+        ) : filteredStations.length > 0 ? (
           filteredStations.map(station => (
             <StationCard 
               key={station.id}
               id={station.id}
               name={station.name}
-              address={station.address}
-              distance={station.distance}
-              rating={station.rating}
-              openTime={station.openTime}
-              closeTime={station.closeTime}
-              availableSlots={station.availableSlots}
+              address={`${station.address}, ${station.city}`}
+              distance={getDistance(station.latitude, station.longitude)}
+              rating={station.rating || 0}
+              openTime={formatTime(station.open_time)}
+              closeTime={formatTime(station.close_time)}
+              availableSlots={getAvailableSlots()}
             />
           ))
         ) : (

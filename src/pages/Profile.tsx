@@ -1,32 +1,74 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Mail, Car, Bookmark, CreditCard, Settings, ArrowRightFromLine, Plus } from 'lucide-react';
+import { User, Mail, Car, Bookmark, CreditCard, Settings, ArrowRightFromLine, Plus, Phone } from 'lucide-react';
 import MobileLayout from '@/components/layout/MobileLayout';
 import ProfileItem from '@/components/profile/ProfileItem';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+
+type ProfileData = {
+  id: string;
+  full_name: string | null;
+  phone: string | null;
+  avatar_url: string | null;
+};
 
 const Profile = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user, signOut } = useAuth();
   
-  // Mock user data
-  const [userData] = useState({
-    name: 'John Doe',
-    email: 'john.doe@example.com',
-    profileImage: null,
-  });
+  const [profileData, setProfileData] = useState<ProfileData | null>(null);
+  const [loading, setLoading] = useState(true);
   
-  const handleLogout = () => {
-    // Simulate logout
-    toast({
-      title: "Logged out",
-      description: "You have been successfully logged out",
-    });
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!user) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+        
+        if (error) {
+          console.error('Error fetching profile:', error);
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to load profile data",
+          });
+        } else {
+          setProfileData(data);
+        }
+      } catch (error) {
+        console.error('Error:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
     
-    setTimeout(() => {
-      navigate('/login');
-    }, 1000);
+    fetchProfile();
+  }, [user, toast]);
+  
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      toast({
+        title: "Logged out",
+        description: "You have been successfully logged out",
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to log out",
+      });
+    }
   };
   
   return (
@@ -34,10 +76,10 @@ const Profile = () => {
       <div className="pt-2 pb-6">
         <div className="card flex items-center mb-6">
           <div className="mr-4 relative">
-            {userData.profileImage ? (
+            {profileData?.avatar_url ? (
               <img 
-                src={userData.profileImage} 
-                alt={userData.name} 
+                src={profileData.avatar_url} 
+                alt={profileData.full_name || 'User'} 
                 className="w-16 h-16 rounded-full object-cover"
               />
             ) : (
@@ -51,8 +93,10 @@ const Profile = () => {
           </div>
           
           <div>
-            <h2 className="font-semibold text-lg">{userData.name}</h2>
-            <p className="text-slate-500">{userData.email}</p>
+            <h2 className="font-semibold text-lg">
+              {loading ? 'Loading...' : profileData?.full_name || user?.email}
+            </h2>
+            <p className="text-slate-500">{user?.email}</p>
           </div>
         </div>
         
@@ -62,6 +106,12 @@ const Profile = () => {
             title="Personal Information"
             description="Update your name, email, and password"
             onClick={() => navigate('/profile/personal-info')}
+          />
+          <ProfileItem
+            icon={<Phone size={20} />}
+            title="Contact Information"
+            description="Update your phone number"
+            onClick={() => navigate('/profile/contact-info')}
           />
           <ProfileItem
             icon={<Car size={20} />}
