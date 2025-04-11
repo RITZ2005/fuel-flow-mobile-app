@@ -1,9 +1,11 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Car, AlertCircle, Fuel } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -21,13 +23,11 @@ const AddVehicle = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   
   const addVehicleMutation = useMutation({
     mutationFn: async () => {
-      const { data: userData } = await supabase.auth.getUser();
-      const userId = userData.user?.id;
-      
-      if (!userId) {
+      if (!user) {
         throw new Error("User not authenticated");
       }
       
@@ -35,7 +35,7 @@ const AddVehicle = () => {
         .from('vehicles')
         .insert([
           {
-            user_id: userId,
+            user_id: user.id,
             name: name,
             make: make,
             model: model,
@@ -43,7 +43,8 @@ const AddVehicle = () => {
             license_plate: licensePlate,
             cng_capacity: Number(cngCapacity),
           },
-        ]);
+        ])
+        .select();
       
       if (error) {
         throw new Error(error.message);
@@ -76,6 +77,12 @@ const AddVehicle = () => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
+    
+    if (!user) {
+      setError("You must be logged in to add a vehicle");
+      setIsLoading(false);
+      return;
+    }
     
     if (!name || !make || !model || !year || !cngCapacity) {
       setError("Please fill in all required fields");
