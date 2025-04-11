@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Mail, User, LogOut, ChevronRight } from 'lucide-react';
@@ -24,7 +25,7 @@ const Profile = () => {
       if (!user) return;
       
       try {
-        // Fetching user profile data
+        // Fetching user profile data - simplified to avoid deep type recursion
         const { data, error } = await supabase
           .from('profiles')
           .select('*')
@@ -33,13 +34,14 @@ const Profile = () => {
         
         if (error) {
           console.error('Error fetching profile:', error);
-        } else if (data) {
-          setProfile({
-            id: user.id,
-            full_name: user.user_metadata?.full_name,
-            email: user.email,
-          });
-        }
+        } 
+        
+        // Set profile using user data instead of potentially problematic query
+        setProfile({
+          id: user.id,
+          full_name: user.user_metadata?.full_name,
+          email: user.email,
+        });
       } catch (error) {
         console.error('Error in fetchProfile:', error);
       } finally {
@@ -129,7 +131,7 @@ const Profile = () => {
               <ProfileItem 
                 icon={<ChevronRight size={18} />} 
                 title="Language" 
-                subtitle="English"
+                description="English"
                 onClick={() => navigate('/language')}
               />
             </div>

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Car, Plus } from 'lucide-react';
@@ -74,6 +75,18 @@ const AddVehicle = () => {
       });
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  // Function to handle number input changes
+  const handleNumberChange = (
+    setter: React.Dispatch<React.SetStateAction<number | ''>>,
+    value: string
+  ) => {
+    if (value === '') {
+      setter('');
+    } else if (!isNaN(Number(value))) {
+      setter(Number(value));
     }
   };
   
@@ -158,7 +171,7 @@ const AddVehicle = () => {
                 className="form-input"
                 placeholder="e.g., 2020"
                 value={year}
-                onChange={(e) => setYear(e.target.value)}
+                onChange={(e) => handleNumberChange(setYear, e.target.value)}
               />
             </div>
           </div>
@@ -192,7 +205,7 @@ const AddVehicle = () => {
                 className="form-input"
                 placeholder="e.g., 14"
                 value={cngCapacity}
-                onChange={(e) => setCngCapacity(e.target.value)}
+                onChange={(e) => handleNumberChange(setCngCapacity, e.target.value)}
               />
             </div>
           </div>

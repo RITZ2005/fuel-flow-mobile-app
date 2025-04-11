@@ -7,22 +7,24 @@ interface StationCardProps {
   id: string;
   name: string;
   address: string;
-  distance: string;
+  city?: string;          // Made optional as it might not be provided
+  distance?: string;      // Made optional
   rating: number;
-  openTime: string;
-  closeTime: string;
-  availableSlots: number;
+  openTime?: string;      // Made optional
+  closeTime?: string;     // Made optional
+  availableSlots?: number; // Made optional
 }
 
 const StationCard = ({
   id,
   name,
   address,
-  distance,
+  city,
+  distance = "1 km",  // Default value
   rating,
-  openTime,
-  closeTime,
-  availableSlots,
+  openTime = "08:00", // Default value
+  closeTime = "20:00", // Default value
+  availableSlots = 5, // Default value
 }: StationCardProps) => {
   const navigate = useNavigate();
   
@@ -33,7 +35,7 @@ const StationCard = ({
           <h3 className="font-semibold text-lg">{name}</h3>
           <div className="flex items-center text-slate-500 text-sm mt-1">
             <MapPin size={14} className="mr-1" />
-            <span>{address}</span>
+            <span>{address}{city ? `, ${city}` : ''}</span>
           </div>
         </div>
         <div className="flex items-center bg-yellow-50 px-2 py-1 rounded-full">

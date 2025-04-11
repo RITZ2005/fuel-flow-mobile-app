@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Search, MapPin, Filter } from 'lucide-react';
 import MobileLayout from '@/components/layout/MobileLayout';
@@ -89,7 +90,9 @@ const Stations = () => {
               name={station.name}
               address={station.address}
               city={station.city}
-              rating={station.rating}
+              rating={station.rating || 0}
+              openTime={station.open_time}
+              closeTime={station.close_time}
             />
           ))
         ) : (
