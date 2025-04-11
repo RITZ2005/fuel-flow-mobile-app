@@ -1,16 +1,16 @@
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Settings, CreditCard, HelpCircle, ShieldAlert } from 'lucide-react';
 import ProfileItem from '@/components/profile/ProfileItem';
+import MobileLayout from '@/components/layout/MobileLayout';
 
 const Profile = () => {
   const navigate = useNavigate();
   
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="container py-12">
-        <h1 className="text-3xl font-bold mb-6">Profile</h1>
-        
+    <MobileLayout title="My Profile">
+      <div className="px-4 py-6">
         <div className="bg-white shadow rounded-lg overflow-hidden">
           <ProfileItem
             icon={<User size={20} />}
@@ -44,7 +44,7 @@ const Profile = () => {
           />
         </div>
       </div>
-    </div>
+    </MobileLayout>
   );
 };
 

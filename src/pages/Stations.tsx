@@ -1,65 +1,15 @@
+
 import React, { useEffect, useState } from 'react';
 import { MapPin, Search, Star } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
-import AppLayout from '@/components/layout/AppLayout';
+import MobileLayout from '@/components/layout/MobileLayout';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tables } from '@/integrations/supabase/types';
+import StationCard from '@/components/stations/StationCard';
 
 type Station = Tables<'stations'>;
-
-const StationCard = ({ 
-  id, 
-  name, 
-  address, 
-  location, 
-  rating 
-}: { 
-  id: string; 
-  name: string; 
-  address: string; 
-  location: string; 
-  rating: number;
-}) => {
-  const navigate = useNavigate();
-  
-  return (
-    <div 
-      className="bg-white rounded-lg shadow-sm border border-gray-100 p-4 mb-3 cursor-pointer hover:shadow-md transition-shadow"
-      onClick={() => navigate(`/book-slot/${id}`)}
-    >
-      <div className="flex justify-between items-start">
-        <div>
-          <h3 className="font-medium text-gray-900">{name}</h3>
-          <div className="flex items-center text-sm text-gray-500 mt-1">
-            <MapPin size={14} className="mr-1" />
-            <span>{address}</span>
-          </div>
-          <div className="text-xs text-gray-400 mt-1">{location}</div>
-        </div>
-        <div className="flex items-center bg-yellow-50 px-2 py-1 rounded">
-          <Star size={14} className="text-yellow-500 mr-1" />
-          <span className="text-sm font-medium">{rating.toFixed(1)}</span>
-        </div>
-      </div>
-      <div className="mt-3 flex justify-between items-center">
-        <div className="text-xs bg-green-50 text-green-700 px-2 py-1 rounded">
-          Open Now
-        </div>
-        <button 
-          className="text-sm text-cng-primary font-medium"
-          onClick={(e) => {
-            e.stopPropagation();
-            navigate(`/book-slot/${id}`);
-          }}
-        >
-          Book Slot
-        </button>
-      </div>
-    </div>
-  );
-};
 
 const StationSkeleton = () => (
   <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4 mb-3">
@@ -126,7 +76,7 @@ const Stations = () => {
   }, [searchQuery, stations]);
   
   return (
-    <AppLayout title="CNG Stations" showBackButton={false}>
+    <MobileLayout title="CNG Stations">
       <div className="px-4 py-3">
         <div className="relative mb-4">
           <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
@@ -152,7 +102,7 @@ const Stations = () => {
               id={station.id}
               name={station.name}
               address={station.address}
-              location={`${station.city}, ${station.state}`}
+              city={station.city}
               rating={station.rating || 0}
             />
           ))
@@ -162,7 +112,7 @@ const Stations = () => {
           </div>
         )}
       </div>
-    </AppLayout>
+    </MobileLayout>
   );
 };
 

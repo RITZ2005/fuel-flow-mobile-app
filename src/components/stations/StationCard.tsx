@@ -7,12 +7,14 @@ interface StationCardProps {
   id: string;
   name: string;
   address: string;
-  city?: string;          // Made optional as it might not be provided
-  distance?: string;      // Made optional
+  city?: string;          
+  state?: string;
+  distance?: string;      
   rating: number;
-  openTime?: string;      // Made optional
-  closeTime?: string;     // Made optional
-  availableSlots?: number; // Made optional
+  openTime?: string;      
+  closeTime?: string;     
+  availableSlots?: number; 
+  location?: string;      // For backward compatibility
 }
 
 const StationCard = ({
@@ -20,13 +22,18 @@ const StationCard = ({
   name,
   address,
   city,
+  state,
   distance = "1 km",  // Default value
   rating,
   openTime = "08:00", // Default value
   closeTime = "20:00", // Default value
   availableSlots = 5, // Default value
+  location
 }: StationCardProps) => {
   const navigate = useNavigate();
+  
+  // Display location string (either from props or constructed from city/state)
+  const displayLocation = location || (city && state ? `${city}, ${state}` : city || '');
   
   return (
     <div className="card mb-4 animate-slide-up">
@@ -35,8 +42,11 @@ const StationCard = ({
           <h3 className="font-semibold text-lg">{name}</h3>
           <div className="flex items-center text-slate-500 text-sm mt-1">
             <MapPin size={14} className="mr-1" />
-            <span>{address}{city ? `, ${city}` : ''}</span>
+            <span>{address}</span>
           </div>
+          {displayLocation && (
+            <div className="text-xs text-slate-400 mt-1">{displayLocation}</div>
+          )}
         </div>
         <div className="flex items-center bg-yellow-50 px-2 py-1 rounded-full">
           <Star size={14} className="text-yellow-500 mr-1" />
