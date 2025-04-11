@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -77,18 +76,50 @@
     font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     height: 100%;
     -webkit-tap-highlight-color: transparent;
+    -webkit-overflow-scrolling: touch; /* Better scrolling on iOS */
   }
 
   /* Mobile app styles */
   #root {
     @apply max-w-md mx-auto h-full shadow-lg overflow-hidden;
     max-height: 100vh;
+    /* Native mobile app specific styles */
+    .capacitor-app & {
+      @apply shadow-none max-w-none;
+      max-height: none;
+    }
+  }
+  
+  /* Native app adjustments */
+  .capacitor-app {
+    /* Fixed header positioning for native apps */
+    .mobile-header {
+      @apply sticky top-0 z-50;
+      /* iOS safe area inset handling */
+      padding-top: env(safe-area-inset-top, 0px);
+    }
+    
+    /* Bottom tabs padding for native apps */
+    .mobile-footer {
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    
+    /* Content area adjustments */
+    .mobile-content {
+      padding-top: env(safe-area-inset-top, 0px);
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
   }
 }
 
 @layer components {
   .mobile-screen {
     @apply flex flex-col h-full w-full max-w-md mx-auto overflow-hidden bg-cng-background;
+    
+    /* Remove max width limit on native mobile */
+    .capacitor-app & {
+      @apply max-w-none;
+    }
   }
   
   .mobile-header {
