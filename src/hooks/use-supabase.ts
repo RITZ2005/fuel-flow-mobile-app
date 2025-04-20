@@ -8,6 +8,7 @@ import { Tables } from '@/integrations/supabase/types';
 // Define valid table names as a union type
 type TableName = 'stations' | 'time_slots' | 'vehicles' | 'bookings' | 'profiles' | 'updated_at';
 
+// Simplified return type to avoid excessive type instantiation
 type SupabaseHookReturn<T> = {
   data: T[] | null;
   loading: boolean;
