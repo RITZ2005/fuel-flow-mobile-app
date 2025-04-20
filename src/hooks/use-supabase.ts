@@ -8,14 +8,14 @@ import { Tables } from '@/integrations/supabase/types';
 // Define valid table names as a union type
 type TableName = 'stations' | 'time_slots' | 'vehicles' | 'bookings' | 'profiles' | 'updated_at';
 
-// Simplified return type with explicit any to avoid excessive type instantiation
+// Use a simpler return type structure with basic types
 interface SupabaseHookReturn<T> {
   data: T[] | null;
   loading: boolean;
   error: PostgrestError | Error | null;
   fetch: () => Promise<void>;
-  create: (data: any) => Promise<{ data: any; error: PostgrestError | Error | null }>;
-  update: (id: string, data: any) => Promise<{ data: any; error: PostgrestError | Error | null }>;
+  create: (data: Record<string, any>) => Promise<{ data: any; error: PostgrestError | Error | null }>;
+  update: (id: string, data: Record<string, any>) => Promise<{ data: any; error: PostgrestError | Error | null }>;
   remove: (id: string) => Promise<{ error: PostgrestError | Error | null }>;
 }
 
@@ -34,6 +34,7 @@ export function useSupabase<T>(
 
   const { select = '*', userId = null, initialFetch = true } = options;
 
+  // Fetch function
   const fetch = async () => {
     try {
       setLoading(true);
@@ -72,7 +73,8 @@ export function useSupabase<T>(
     }
   };
 
-  const create = async (newData: any) => {
+  // Create function
+  const create = async (newData: Record<string, any>) => {
     try {
       const { data: result, error: supabaseError } = await supabase
         .from(table)
@@ -109,7 +111,8 @@ export function useSupabase<T>(
     }
   };
 
-  const update = async (id: string, updateData: any) => {
+  // Update function
+  const update = async (id: string, updateData: Record<string, any>) => {
     try {
       const { data: result, error: supabaseError } = await supabase
         .from(table)
@@ -128,9 +131,9 @@ export function useSupabase<T>(
       }
       
       // Update local data state
-      setData(prev => 
-        prev ? prev.map(item => (item as any).id === id ? { ...item, ...updateData } : item) : prev
-      );
+      if (data) {
+        setData(data.map(item => ((item as any).id === id ? { ...item, ...updateData } : item)));
+      }
       
       toast({
         title: "Success",
@@ -149,6 +152,7 @@ export function useSupabase<T>(
     }
   };
 
+  // Remove function
   const remove = async (id: string) => {
     try {
       const { error: supabaseError } = await supabase
@@ -167,7 +171,9 @@ export function useSupabase<T>(
       }
       
       // Update local data state
-      setData(prev => prev ? prev.filter(item => (item as any).id !== id) : prev);
+      if (data) {
+        setData(data.filter(item => ((item as any).id !== id)));
+      }
       
       toast({
         title: "Success",
@@ -187,8 +193,13 @@ export function useSupabase<T>(
   };
 
   // Fetch data on initial render if initialFetch is true
-  if (initialFetch && !data && !loading) {
-    fetch();
+  // Using a more direct approach to avoid typing issues
+  if (initialFetch && !data && !loading && !error) {
+    // This will only run once after the first render
+    const initialLoad = async () => {
+      await fetch();
+    };
+    initialLoad();
   }
 
   return {
