@@ -3,9 +3,13 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { PostgrestError } from '@supabase/supabase-js';
 import { useToast } from './use-toast';
+import { Tables } from '@/integrations/supabase/types';
+
+// Define valid table names as a union type
+type TableName = 'stations' | 'time_slots' | 'vehicles' | 'bookings' | 'profiles' | 'updated_at';
 
 type SupabaseHookReturn<T> = {
-  data: T | null;
+  data: T[] | null;
   loading: boolean;
   error: PostgrestError | Error | null;
   fetch: () => Promise<void>;
@@ -15,13 +19,13 @@ type SupabaseHookReturn<T> = {
 };
 
 export function useSupabase<T>(
-  table: string,
+  table: TableName,
   options: {
     select?: string;
     userId?: string | null;
     initialFetch?: boolean;
   } = {}
-): SupabaseHookReturn<T[]> {
+): SupabaseHookReturn<T> {
   const [data, setData] = useState<T[] | null>(null);
   const [loading, setLoading] = useState<boolean>(options.initialFetch !== false);
   const [error, setError] = useState<PostgrestError | Error | null>(null);

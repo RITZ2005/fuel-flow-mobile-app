@@ -118,10 +118,10 @@ const Vehicles = () => {
             {vehicles.map(vehicle => (
               <div key={vehicle.id} className="card p-4 flex items-center justify-between">
                 <div>
-                  <h3 className="font-medium">{vehicle.name || `${vehicle.make} ${vehicle.model}`}</h3>
-                  <p className="text-slate-500 text-sm">{vehicle.make} {vehicle.model} ({vehicle.year || 'N/A'})</p>
-                  {vehicle.license_plate && (
-                    <p className="text-slate-500 text-sm">License Plate: {vehicle.license_plate}</p>
+                  <h3 className="font-medium">{`${vehicle.make} ${vehicle.model}`}</h3>
+                  <p className="text-slate-500 text-sm">{vehicle.make} {vehicle.model}</p>
+                  {vehicle.reg_number && (
+                    <p className="text-slate-500 text-sm">Registration: {vehicle.reg_number}</p>
                   )}
                 </div>
                 <button 
