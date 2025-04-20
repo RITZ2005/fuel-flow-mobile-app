@@ -8,8 +8,8 @@ import { Tables } from '@/integrations/supabase/types';
 // Define valid table names as a union type
 type TableName = 'stations' | 'time_slots' | 'vehicles' | 'bookings' | 'profiles' | 'updated_at';
 
-// Simplified return type to avoid excessive type instantiation
-type SupabaseHookReturn<T> = {
+// Simplified return type with explicit any to avoid excessive type instantiation
+interface SupabaseHookReturn<T> {
   data: T[] | null;
   loading: boolean;
   error: PostgrestError | Error | null;
@@ -17,7 +17,7 @@ type SupabaseHookReturn<T> = {
   create: (data: any) => Promise<{ data: any; error: PostgrestError | Error | null }>;
   update: (id: string, data: any) => Promise<{ data: any; error: PostgrestError | Error | null }>;
   remove: (id: string) => Promise<{ error: PostgrestError | Error | null }>;
-};
+}
 
 export function useSupabase<T>(
   table: TableName,
