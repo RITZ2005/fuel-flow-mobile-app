@@ -2,6 +2,7 @@
 import React, { useEffect } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -11,13 +12,19 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { user, loading } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
     if (!loading && !user) {
       // Redirect when we know user is not authenticated
+      toast({
+        variant: "destructive",
+        title: "Authentication Required",
+        description: "Please login to access this page.",
+      });
       navigate('/login', { state: { from: location }, replace: true });
     }
-  }, [user, loading, navigate, location]);
+  }, [user, loading, navigate, location, toast]);
 
   if (loading) {
     // Show loading spinner while checking authentication

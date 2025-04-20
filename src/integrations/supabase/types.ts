@@ -12,34 +12,37 @@ export type Database = {
       bookings: {
         Row: {
           booking_date: string
+          booking_time: string | null
           created_at: string | null
+          fuel_type: string[] | null
           id: string
           station_id: string
           status: string
           time_slot_id: string
-          updated_at: string | null
           user_id: string
           vehicle_id: string
         }
         Insert: {
           booking_date: string
+          booking_time?: string | null
           created_at?: string | null
+          fuel_type?: string[] | null
           id?: string
           station_id: string
           status?: string
           time_slot_id: string
-          updated_at?: string | null
           user_id: string
           vehicle_id: string
         }
         Update: {
           booking_date?: string
+          booking_time?: string | null
           created_at?: string | null
+          fuel_type?: string[] | null
           id?: string
           station_id?: string
           status?: string
           time_slot_id?: string
-          updated_at?: string | null
           user_id?: string
           vehicle_id?: string
         }
@@ -69,24 +72,33 @@ export type Database = {
       }
       profiles: {
         Row: {
-          bio: string | null
           created_at: string | null
-          full_name: string | null
+          email: string | null
+          first_name: string | null
           id: number
+          last_name: string | null
+          phone: number | null
+          updated_at: string | null
           user_id: string | null
         }
         Insert: {
-          bio?: string | null
           created_at?: string | null
-          full_name?: string | null
+          email?: string | null
+          first_name?: string | null
           id?: never
+          last_name?: string | null
+          phone?: number | null
+          updated_at?: string | null
           user_id?: string | null
         }
         Update: {
-          bio?: string | null
           created_at?: string | null
-          full_name?: string | null
+          email?: string | null
+          first_name?: string | null
           id?: never
+          last_name?: string | null
+          phone?: number | null
+          updated_at?: string | null
           user_id?: string | null
         }
         Relationships: []
@@ -95,77 +107,83 @@ export type Database = {
         Row: {
           address: string
           city: string
-          close_time: string
+          closing_time: string
           created_at: string | null
+          created_by: string | null
+          distance: number | null
+          fuel_types: string[] | null
           id: string
+          is_active: boolean | null
           latitude: number | null
           longitude: number | null
           name: string
-          open_time: string
+          opening_time: string
+          pincode: number | null
           rating: number | null
           state: string
-          updated_at: string | null
         }
         Insert: {
           address: string
           city: string
-          close_time: string
+          closing_time: string
           created_at?: string | null
+          created_by?: string | null
+          distance?: number | null
+          fuel_types?: string[] | null
           id?: string
+          is_active?: boolean | null
           latitude?: number | null
           longitude?: number | null
           name: string
-          open_time: string
+          opening_time: string
+          pincode?: number | null
           rating?: number | null
           state: string
-          updated_at?: string | null
         }
         Update: {
           address?: string
           city?: string
-          close_time?: string
+          closing_time?: string
           created_at?: string | null
+          created_by?: string | null
+          distance?: number | null
+          fuel_types?: string[] | null
           id?: string
+          is_active?: boolean | null
           latitude?: number | null
           longitude?: number | null
           name?: string
-          open_time?: string
+          opening_time?: string
+          pincode?: number | null
           rating?: number | null
           state?: string
-          updated_at?: string | null
         }
         Relationships: []
       }
       time_slots: {
         Row: {
-          booked_count: number
-          capacity: number
           created_at: string | null
-          end_time: string
+          date: string | null
           id: string
-          start_time: string
+          is_available: boolean | null
           station_id: string
-          updated_at: string | null
+          time: string | null
         }
         Insert: {
-          booked_count?: number
-          capacity?: number
           created_at?: string | null
-          end_time: string
+          date?: string | null
           id?: string
-          start_time: string
+          is_available?: boolean | null
           station_id: string
-          updated_at?: string | null
+          time?: string | null
         }
         Update: {
-          booked_count?: number
-          capacity?: number
           created_at?: string | null
-          end_time?: string
+          date?: string | null
           id?: string
-          start_time?: string
+          is_available?: boolean | null
           station_id?: string
-          updated_at?: string | null
+          time?: string | null
         }
         Relationships: [
           {
@@ -177,42 +195,51 @@ export type Database = {
           },
         ]
       }
-      vehicles: {
+      updated_at: {
         Row: {
-          cng_capacity: number | null
-          created_at: string | null
-          id: string
-          license_plate: string | null
-          make: string
-          model: string
-          name: string
+          created_at: string
+          id: number
           updated_at: string | null
-          user_id: string
-          year: number | null
         }
         Insert: {
-          cng_capacity?: number | null
-          created_at?: string | null
-          id?: string
-          license_plate?: string | null
-          make: string
-          model: string
-          name: string
+          created_at?: string
+          id?: number
           updated_at?: string | null
-          user_id: string
-          year?: number | null
         }
         Update: {
-          cng_capacity?: number | null
+          created_at?: string
+          id?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      vehicles: {
+        Row: {
+          created_at: string | null
+          fuel_type: string | null
+          id: string
+          make: string
+          model: string
+          reg_number: number | null
+          user_id: string
+        }
+        Insert: {
           created_at?: string | null
+          fuel_type?: string | null
           id?: string
-          license_plate?: string | null
+          make: string
+          model: string
+          reg_number?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          fuel_type?: string | null
+          id?: string
           make?: string
           model?: string
-          name?: string
-          updated_at?: string | null
+          reg_number?: number | null
           user_id?: string
-          year?: number | null
         }
         Relationships: []
       }

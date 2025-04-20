@@ -21,7 +21,18 @@ export const supabase = createClient<Database>(
   }
 );
 
-// For debugging purposes
+// Set up enhanced debug logging for authentication events
 supabase.auth.onAuthStateChange((event, session) => {
   console.log("Supabase auth event:", event, session?.user?.id);
+  
+  // Additional debugging data
+  if (event === 'SIGNED_IN') {
+    console.log("User signed in successfully");
+  } else if (event === 'SIGNED_OUT') {
+    console.log("User signed out");
+  } else if (event === 'TOKEN_REFRESHED') {
+    console.log("Auth token refreshed");
+  } else if (event === 'USER_UPDATED') {
+    console.log("User data updated");
+  }
 });

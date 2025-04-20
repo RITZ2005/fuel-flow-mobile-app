@@ -1,13 +1,13 @@
 
 import React, { useEffect, useState } from 'react';
-import { MapPin, Search, Star } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { MapPin, Search, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import MobileLayout from '@/components/layout/MobileLayout';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tables } from '@/integrations/supabase/types';
 import StationCard from '@/components/stations/StationCard';
+import { useSupabase } from '@/hooks/use-supabase';
 
 type Station = Tables<'stations'>;
 
@@ -29,36 +29,13 @@ const StationSkeleton = () => (
 );
 
 const Stations = () => {
-  const [stations, setStations] = useState<Station[]>([]);
+  const { data: stations, loading, error } = useSupabase<Station>('stations');
   const [filteredStations, setFilteredStations] = useState<Station[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [loading, setLoading] = useState(true);
   
   useEffect(() => {
-    const fetchStations = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('stations')
-          .select('*')
-          .order('name');
-          
-        if (error) {
-          throw error;
-        }
-        
-        setStations(data || []);
-        setFilteredStations(data || []);
-      } catch (error) {
-        console.error('Error fetching stations:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+    if (!stations) return;
     
-    fetchStations();
-  }, []);
-  
-  useEffect(() => {
     if (searchQuery.trim() === '') {
       setFilteredStations(stations);
       return;
@@ -74,6 +51,10 @@ const Stations = () => {
     
     setFilteredStations(filtered);
   }, [searchQuery, stations]);
+  
+  if (error) {
+    console.error("Error loading stations:", error);
+  }
   
   return (
     <MobileLayout title="CNG Stations">
@@ -95,20 +76,27 @@ const Stations = () => {
             <StationSkeleton />
             <StationSkeleton />
           </>
-        ) : filteredStations.length > 0 ? (
-          filteredStations.map(station => (
+        ) : stations && stations.length > 0 ? (
+          (filteredStations.length > 0 ? filteredStations : stations).map(station => (
             <StationCard
               key={station.id}
               id={station.id}
               name={station.name}
               address={station.address}
               city={station.city}
+              state={station.state}
               rating={station.rating || 0}
+              openTime={station.opening_time?.toString() || "08:00"}
+              closeTime={station.closing_time?.toString() || "20:00"}
             />
           ))
         ) : (
           <div className="text-center py-8">
-            <p className="text-gray-500">No stations found matching your search.</p>
+            <p className="text-gray-500">
+              {error ? 
+                "Error loading stations. Please try again later." : 
+                "No stations found matching your search."}
+            </p>
           </div>
         )}
       </div>

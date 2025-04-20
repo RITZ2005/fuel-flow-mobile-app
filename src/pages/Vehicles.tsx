@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Car, Plus, Trash2 } from 'lucide-react';
+import { Car, Plus, Trash2, Loader2 } from 'lucide-react';
 import MobileLayout from '@/components/layout/MobileLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -15,48 +16,59 @@ const Vehicles = () => {
   const { toast } = useToast();
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
   
   useEffect(() => {
-    const fetchVehicles = async () => {
-      if (!user) return;
-      
-      try {
-        const { data, error } = await supabase
-          .from('vehicles')
-          .select('*')
-          .eq('user_id', user.id);
-        
-        if (error) {
-          console.error('Error fetching vehicles:', error);
-          toast({
-            variant: "destructive",
-            title: "Error",
-            description: "Unable to load your vehicles. Please try again.",
-          });
-        } else if (data) {
-          setVehicles(data);
-        }
-      } catch (error) {
-        console.error('Error in fetchVehicles:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
     fetchVehicles();
-  }, [user, toast]);
+  }, [user]);
+  
+  const fetchVehicles = async () => {
+    if (!user) return;
+    
+    try {
+      setIsLoading(true);
+      console.log('Fetching vehicles for user:', user.id);
+      
+      const { data, error } = await supabase
+        .from('vehicles')
+        .select('*')
+        .eq('user_id', user.id);
+      
+      if (error) {
+        console.error('Error fetching vehicles:', error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Unable to load your vehicles. Please try again.",
+        });
+      } else if (data) {
+        console.log('Vehicles fetched successfully:', data.length);
+        setVehicles(data);
+      }
+    } catch (error) {
+      console.error('Exception in fetchVehicles:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
   
   const handleDeleteVehicle = async (id: string) => {
     if (!user) return;
     
     try {
+      setIsDeleting(id);
+      console.log('Deleting vehicle:', id);
+      
       const { error } = await supabase
         .from('vehicles')
         .delete()
         .eq('id', id)
         .eq('user_id', user.id);
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error deleting vehicle:', error);
+        throw error;
+      }
       
       // Update the local state
       setVehicles(vehicles.filter(vehicle => vehicle.id !== id));
@@ -66,11 +78,14 @@ const Vehicles = () => {
         description: "The vehicle has been removed successfully",
       });
     } catch (error: any) {
+      console.error('Exception in handleDeleteVehicle:', error);
       toast({
         variant: "destructive",
         title: "Error",
         description: error.message || "Failed to remove vehicle",
       });
+    } finally {
+      setIsDeleting(null);
     }
   };
   
@@ -78,7 +93,7 @@ const Vehicles = () => {
     return (
       <MobileLayout>
         <div className="h-full flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cng-primary"></div>
+          <Loader2 className="h-12 w-12 animate-spin text-cng-primary" />
         </div>
       </MobileLayout>
     );
@@ -103,17 +118,22 @@ const Vehicles = () => {
             {vehicles.map(vehicle => (
               <div key={vehicle.id} className="card p-4 flex items-center justify-between">
                 <div>
-                  <h3 className="font-medium">{vehicle.name}</h3>
-                  <p className="text-slate-500 text-sm">{vehicle.make} {vehicle.model} ({vehicle.year})</p>
+                  <h3 className="font-medium">{vehicle.name || `${vehicle.make} ${vehicle.model}`}</h3>
+                  <p className="text-slate-500 text-sm">{vehicle.make} {vehicle.model} ({vehicle.year || 'N/A'})</p>
                   {vehicle.license_plate && (
                     <p className="text-slate-500 text-sm">License Plate: {vehicle.license_plate}</p>
                   )}
                 </div>
                 <button 
-                  className="text-red-500 hover:text-red-700"
+                  className="text-red-500 hover:text-red-700 disabled:opacity-50"
                   onClick={() => handleDeleteVehicle(vehicle.id)}
+                  disabled={isDeleting === vehicle.id}
                 >
-                  <Trash2 size={20} />
+                  {isDeleting === vehicle.id ? (
+                    <Loader2 size={20} className="animate-spin" />
+                  ) : (
+                    <Trash2 size={20} />
+                  )}
                 </button>
               </div>
             ))}
