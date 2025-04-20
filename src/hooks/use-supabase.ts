@@ -186,7 +186,7 @@ export function useSupabase<T>(
   };
 
   // Fetch data on initial render if initialFetch is true
-  if (initialFetch) {
+  if (initialFetch && !data && !loading) {
     fetch();
   }
 
