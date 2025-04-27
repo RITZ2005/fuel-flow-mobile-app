@@ -68,8 +68,8 @@ export const DataRealTimeMonitor = <T extends { id: string }>({
             <div key={item.id} className="p-2 border rounded bg-slate-50">
               <div className="flex justify-between">
                 <div className="font-medium">
-                  {/* Use optional chaining to safely access properties */}
-                  {('name' in item ? item.name : item.id.substring(0, 8))}
+                  {/* Use optional chaining and type checking for safe property access */}
+                  {('name' in item ? String(item.name) : item.id.substring(0, 8))}
                 </div>
                 <div className="text-xs text-slate-500">ID: {item.id.substring(0, 8)}</div>
               </div>

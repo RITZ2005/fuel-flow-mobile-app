@@ -43,7 +43,7 @@ export function useSupabaseCrud<T extends { id: string }>(
       // Cast table to string to make TypeScript happy with the Supabase API
       const tableStr = table as string;
       
-      let query = supabase.from(tableStr).select(select);
+      let query = supabase.from(tableStr as any).select(select);
       
       if (userId) {
         query = query.eq('user_id', userId);
@@ -81,7 +81,7 @@ export function useSupabaseCrud<T extends { id: string }>(
       const tableStr = table as string;
       
       const { data: result, error: supabaseError } = await supabase
-        .from(tableStr)
+        .from(tableStr as any)
         .insert(newData)
         .select();
       
@@ -90,7 +90,7 @@ export function useSupabaseCrud<T extends { id: string }>(
         toast({
           variant: "destructive",
           title: "Error",
-          description: supabaseError.message || `Failed to create new ${String(tableStr).slice(0, -1)}`
+          description: supabaseError.message || `Failed to create new ${String(table).slice(0, -1)}`
         });
         return { data: null, error: supabaseError };
       }
@@ -105,7 +105,7 @@ export function useSupabaseCrud<T extends { id: string }>(
       
       toast({
         title: "Success",
-        description: `${String(tableStr).charAt(0).toUpperCase() + String(tableStr).slice(1, -1)} created successfully`
+        description: `${String(table).charAt(0).toUpperCase() + String(table).slice(1, -1)} created successfully`
       });
       
       return { data: result as unknown as T[] | null, error: null };
@@ -126,7 +126,7 @@ export function useSupabaseCrud<T extends { id: string }>(
       const tableStr = table as string;
       
       const { data: result, error: supabaseError } = await supabase
-        .from(tableStr)
+        .from(tableStr as any)
         .update(updateData)
         .eq('id', id)
         .select();
@@ -136,7 +136,7 @@ export function useSupabaseCrud<T extends { id: string }>(
         toast({
           variant: "destructive",
           title: "Error",
-          description: supabaseError.message || `Failed to update ${String(tableStr).slice(0, -1)}`
+          description: supabaseError.message || `Failed to update ${String(table).slice(0, -1)}`
         });
         return { data: null, error: supabaseError };
       }
@@ -148,7 +148,7 @@ export function useSupabaseCrud<T extends { id: string }>(
       
       toast({
         title: "Success",
-        description: `${String(tableStr).charAt(0).toUpperCase() + String(tableStr).slice(1, -1)} updated successfully`
+        description: `${String(table).charAt(0).toUpperCase() + String(table).slice(1, -1)} updated successfully`
       });
       
       return { data: result as unknown as T[] | null, error: null };
@@ -169,7 +169,7 @@ export function useSupabaseCrud<T extends { id: string }>(
       const tableStr = table as string;
       
       const { error: supabaseError } = await supabase
-        .from(tableStr)
+        .from(tableStr as any)
         .delete()
         .eq('id', id);
       
@@ -178,7 +178,7 @@ export function useSupabaseCrud<T extends { id: string }>(
         toast({
           variant: "destructive",
           title: "Error",
-          description: supabaseError.message || `Failed to delete ${String(tableStr).slice(0, -1)}`
+          description: supabaseError.message || `Failed to delete ${String(table).slice(0, -1)}`
         });
         return { error: supabaseError };
       }
@@ -190,7 +190,7 @@ export function useSupabaseCrud<T extends { id: string }>(
       
       toast({
         title: "Success",
-        description: `${String(tableStr).charAt(0).toUpperCase() + String(tableStr).slice(1, -1)} deleted successfully`
+        description: `${String(table).charAt(0).toUpperCase() + String(table).slice(1, -1)} deleted successfully`
       });
       
       return { error: null };

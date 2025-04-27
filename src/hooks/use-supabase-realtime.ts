@@ -24,10 +24,11 @@ export function useSupabaseRealtime<T extends { id: string }>(props: UseSupabase
     // Cast table to string to make TypeScript happy with the Supabase API
     const tableStr = table as string;
     
+    // Using the correct channel method signature
     const channel = supabase.channel('schema-db-changes')
       .on(
         'postgres_changes',
-        { event, schema, table: tableStr, filter },
+        { event: event as any, schema, table: tableStr, filter },
         (payload) => {
           console.log('Realtime update received:', payload);
           setData(payload.new as T);
