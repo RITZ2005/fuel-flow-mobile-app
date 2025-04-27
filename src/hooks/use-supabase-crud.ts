@@ -40,14 +40,11 @@ export function useSupabaseCrud<T extends { id: string }>(
       setLoading(true);
       setError(null);
       
-      // Use type assertion with "as const" to fix the infinite type instantiation issue
-      const query = supabase.from(table as ValidTableName).select(select);
-      
-      if (userId) {
-        query.eq('user_id', userId);
-      }
-      
-      const { data: result, error: supabaseError } = await query;
+      // Fix: Use a string literal for the table name, not as ValidTableName
+      const { data: result, error: supabaseError } = await supabase
+        .from(table)
+        .select(select)
+        .conditionalFilter('user_id', userId);
       
       if (supabaseError) {
         setError(supabaseError);
@@ -83,7 +80,7 @@ export function useSupabaseCrud<T extends { id: string }>(
   const create = async (newData: Omit<T, 'id'>) => {
     try {
       const { data: result, error: supabaseError } = await supabase
-        .from(table as ValidTableName)
+        .from(table)
         .insert(newData)
         .select();
       
@@ -125,7 +122,7 @@ export function useSupabaseCrud<T extends { id: string }>(
   const update = async (id: string, updateData: Partial<T>) => {
     try {
       const { data: result, error: supabaseError } = await supabase
-        .from(table as ValidTableName)
+        .from(table)
         .update(updateData)
         .eq('id', id)
         .select();
@@ -165,7 +162,7 @@ export function useSupabaseCrud<T extends { id: string }>(
   const remove = async (id: string) => {
     try {
       const { error: supabaseError } = await supabase
-        .from(table as ValidTableName)
+        .from(table)
         .delete()
         .eq('id', id);
       
@@ -209,5 +206,42 @@ export function useSupabaseCrud<T extends { id: string }>(
     create,
     update,
     remove
+  };
+}
+
+// Helper extension for the Supabase QueryBuilder
+declare global {
+  interface PostgrestFilterBuilder<T> {
+    conditionalFilter: (column: string, value: any) => PostgrestFilterBuilder<T>;
+  }
+}
+
+// Add a conditional filter method to the Supabase QueryBuilder prototype
+if (typeof window !== 'undefined') {
+  const originalFrom = supabase.from.bind(supabase);
+  
+  supabase.from = function(table) {
+    const builder = originalFrom(table);
+    
+    if (builder && typeof builder === 'object') {
+      const originalSelect = builder.select.bind(builder);
+      
+      builder.select = function(columns) {
+        const filterBuilder = originalSelect(columns);
+        
+        if (filterBuilder && typeof filterBuilder === 'object' && !filterBuilder.conditionalFilter) {
+          filterBuilder.conditionalFilter = function(column, value) {
+            if (value !== undefined && value !== null) {
+              return this.eq(column, value);
+            }
+            return this;
+          };
+        }
+        
+        return filterBuilder;
+      };
+    }
+    
+    return builder;
   };
 }
