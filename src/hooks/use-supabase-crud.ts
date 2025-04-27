@@ -3,9 +3,10 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { PostgrestError } from '@supabase/supabase-js';
 import { useToast } from './use-toast';
-import { Tables } from '@/integrations/supabase/types';
+import { Database } from '@/integrations/supabase/types';
 
-type TableName = keyof Tables<'public'>;
+// Define valid table names from the Database type
+type ValidTableName = keyof Database['public']['Tables'];
 
 interface UseSupabaseCrudOptions {
   select?: string;
@@ -24,7 +25,7 @@ interface UseSupabaseCrudReturn<T> {
 }
 
 export function useSupabaseCrud<T extends { id: string }>(
-  table: TableName,
+  table: ValidTableName,
   options: UseSupabaseCrudOptions = {}
 ): UseSupabaseCrudReturn<T> {
   const [data, setData] = useState<T[] | null>(null);
@@ -39,7 +40,10 @@ export function useSupabaseCrud<T extends { id: string }>(
       setLoading(true);
       setError(null);
       
-      let query = supabase.from(table).select(select);
+      // Cast table to string to make TypeScript happy with the Supabase API
+      const tableStr = table as string;
+      
+      let query = supabase.from(tableStr).select(select);
       
       if (userId) {
         query = query.eq('user_id', userId);
@@ -49,22 +53,22 @@ export function useSupabaseCrud<T extends { id: string }>(
       
       if (supabaseError) {
         setError(supabaseError);
-        console.error(`Error fetching ${table}:`, supabaseError);
+        console.error(`Error fetching ${tableStr}:`, supabaseError);
         toast({
           variant: "destructive",
           title: `Error Loading Data`,
-          description: supabaseError.message || `Failed to load ${table}`
+          description: supabaseError.message || `Failed to load ${tableStr}`
         });
       } else {
-        setData(result as T[]);
+        setData(result as unknown as T[]);
       }
     } catch (err: any) {
       setError(err);
-      console.error(`Exception in fetch ${table}:`, err);
+      console.error(`Exception in fetch ${String(table)}:`, err);
       toast({
         variant: "destructive",
         title: "Error",
-        description: err.message || `An unexpected error occurred while fetching ${table}`
+        description: err.message || `An unexpected error occurred while fetching ${String(table)}`
       });
     } finally {
       setLoading(false);
@@ -73,17 +77,20 @@ export function useSupabaseCrud<T extends { id: string }>(
 
   const create = async (newData: Omit<T, 'id'>) => {
     try {
+      // Cast table to string to make TypeScript happy with the Supabase API
+      const tableStr = table as string;
+      
       const { data: result, error: supabaseError } = await supabase
-        .from(table)
+        .from(tableStr)
         .insert(newData)
         .select();
       
       if (supabaseError) {
-        console.error(`Error creating ${table}:`, supabaseError);
+        console.error(`Error creating ${tableStr}:`, supabaseError);
         toast({
           variant: "destructive",
           title: "Error",
-          description: supabaseError.message || `Failed to create new ${table.slice(0, -1)}`
+          description: supabaseError.message || `Failed to create new ${String(tableStr).slice(0, -1)}`
         });
         return { data: null, error: supabaseError };
       }
@@ -91,19 +98,19 @@ export function useSupabaseCrud<T extends { id: string }>(
       setData(prev => {
         const newArray = [...(prev || [])];
         if (result) {
-          newArray.push(...(result as T[]));
+          newArray.push(...(result as unknown as T[]));
         }
         return newArray;
       });
       
       toast({
         title: "Success",
-        description: `${table.charAt(0).toUpperCase() + table.slice(1, -1)} created successfully`
+        description: `${String(tableStr).charAt(0).toUpperCase() + String(tableStr).slice(1, -1)} created successfully`
       });
       
-      return { data: result as T[] | null, error: null };
+      return { data: result as unknown as T[] | null, error: null };
     } catch (err: any) {
-      console.error(`Exception in create ${table}:`, err);
+      console.error(`Exception in create ${String(table)}:`, err);
       toast({
         variant: "destructive",
         title: "Error",
@@ -115,18 +122,21 @@ export function useSupabaseCrud<T extends { id: string }>(
 
   const update = async (id: string, updateData: Partial<T>) => {
     try {
+      // Cast table to string to make TypeScript happy with the Supabase API
+      const tableStr = table as string;
+      
       const { data: result, error: supabaseError } = await supabase
-        .from(table)
+        .from(tableStr)
         .update(updateData)
         .eq('id', id)
         .select();
       
       if (supabaseError) {
-        console.error(`Error updating ${table}:`, supabaseError);
+        console.error(`Error updating ${tableStr}:`, supabaseError);
         toast({
           variant: "destructive",
           title: "Error",
-          description: supabaseError.message || `Failed to update ${table.slice(0, -1)}`
+          description: supabaseError.message || `Failed to update ${String(tableStr).slice(0, -1)}`
         });
         return { data: null, error: supabaseError };
       }
@@ -138,12 +148,12 @@ export function useSupabaseCrud<T extends { id: string }>(
       
       toast({
         title: "Success",
-        description: `${table.charAt(0).toUpperCase() + table.slice(1, -1)} updated successfully`
+        description: `${String(tableStr).charAt(0).toUpperCase() + String(tableStr).slice(1, -1)} updated successfully`
       });
       
-      return { data: result as T[] | null, error: null };
+      return { data: result as unknown as T[] | null, error: null };
     } catch (err: any) {
-      console.error(`Exception in update ${table}:`, err);
+      console.error(`Exception in update ${String(table)}:`, err);
       toast({
         variant: "destructive",
         title: "Error",
@@ -155,17 +165,20 @@ export function useSupabaseCrud<T extends { id: string }>(
 
   const remove = async (id: string) => {
     try {
+      // Cast table to string to make TypeScript happy with the Supabase API
+      const tableStr = table as string;
+      
       const { error: supabaseError } = await supabase
-        .from(table)
+        .from(tableStr)
         .delete()
         .eq('id', id);
       
       if (supabaseError) {
-        console.error(`Error deleting ${table}:`, supabaseError);
+        console.error(`Error deleting ${tableStr}:`, supabaseError);
         toast({
           variant: "destructive",
           title: "Error",
-          description: supabaseError.message || `Failed to delete ${table.slice(0, -1)}`
+          description: supabaseError.message || `Failed to delete ${String(tableStr).slice(0, -1)}`
         });
         return { error: supabaseError };
       }
@@ -177,12 +190,12 @@ export function useSupabaseCrud<T extends { id: string }>(
       
       toast({
         title: "Success",
-        description: `${table.charAt(0).toUpperCase() + table.slice(1, -1)} deleted successfully`
+        description: `${String(tableStr).charAt(0).toUpperCase() + String(tableStr).slice(1, -1)} deleted successfully`
       });
       
       return { error: null };
     } catch (err: any) {
-      console.error(`Exception in delete ${table}:`, err);
+      console.error(`Exception in delete ${String(table)}:`, err);
       toast({
         variant: "destructive",
         title: "Error",
@@ -191,6 +204,11 @@ export function useSupabaseCrud<T extends { id: string }>(
       return { error: err };
     }
   };
+
+  // Initial fetch if initialFetch is true
+  if (options.initialFetch !== false) {
+    fetch();
+  }
 
   return {
     data,

@@ -2,13 +2,14 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { RealtimeChannel } from '@supabase/supabase-js';
-import { Tables } from '@/integrations/supabase/types';
+import { Database } from '@/integrations/supabase/types';
 
-type TableName = keyof Tables<'public'>;
+// Define valid table names from the Database type
+type ValidTableName = keyof Database['public']['Tables'];
 type RealtimeEvent = 'INSERT' | 'UPDATE' | 'DELETE' | '*';
 
 interface UseSupabaseRealtimeProps {
-  table: TableName;
+  table: ValidTableName;
   event?: RealtimeEvent;
   schema?: string;
   filter?: string;
@@ -20,10 +21,13 @@ export function useSupabaseRealtime<T extends { id: string }>(props: UseSupabase
   const [channel, setChannel] = useState<RealtimeChannel | null>(null);
 
   useEffect(() => {
+    // Cast table to string to make TypeScript happy with the Supabase API
+    const tableStr = table as string;
+    
     const channel = supabase.channel('schema-db-changes')
       .on(
         'postgres_changes',
-        { event, schema, table, filter },
+        { event, schema, table: tableStr, filter },
         (payload) => {
           console.log('Realtime update received:', payload);
           setData(payload.new as T);

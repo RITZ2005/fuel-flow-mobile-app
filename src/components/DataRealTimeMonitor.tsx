@@ -1,15 +1,16 @@
 
 import React, { useEffect, useState } from 'react';
-import { Tables } from '@/integrations/supabase/types';
+import { Database } from '@/integrations/supabase/types';
 import { useSupabase, useSupabaseRealtime } from '@/hooks/use-supabase';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
 
-type TableName = keyof Tables<'public'>;
+// Define valid table names from the Database type
+type ValidTableName = keyof Database['public']['Tables'];
 
 interface DataRealTimeMonitorProps {
-  table: TableName;
+  table: ValidTableName;
   title: string;
   maxItems?: number;
 }
@@ -32,7 +33,7 @@ export const DataRealTimeMonitor = <T extends { id: string }>({
       setLastUpdate(new Date().toLocaleTimeString());
       fetch();
     }
-  }, [realtimeData]);
+  }, [realtimeData, fetch]);
 
   if (loading) {
     return (
@@ -66,15 +67,18 @@ export const DataRealTimeMonitor = <T extends { id: string }>({
           {items.slice(0, maxItems).map((item) => (
             <div key={item.id} className="p-2 border rounded bg-slate-50">
               <div className="flex justify-between">
-                <div className="font-medium">{item.name || item.id}</div>
+                <div className="font-medium">
+                  {/* Use optional chaining to safely access properties */}
+                  {('name' in item ? item.name : item.id.substring(0, 8))}
+                </div>
                 <div className="text-xs text-slate-500">ID: {item.id.substring(0, 8)}</div>
               </div>
               <div className="text-sm text-slate-600 mt-1">
                 {Object.keys(item).slice(0, 3).map(key => {
                   if (key !== 'id' && key !== 'name') {
-                    const value = typeof item[key] === 'object' 
-                      ? JSON.stringify(item[key]).substring(0, 50) 
-                      : String(item[key]).substring(0, 50);
+                    const value = typeof item[key as keyof T] === 'object' 
+                      ? JSON.stringify(item[key as keyof T]).substring(0, 50) 
+                      : String(item[key as keyof T]).substring(0, 50);
                     return (
                       <div key={key} className="text-xs">
                         <span className="font-medium">{key}:</span> {value}
@@ -93,4 +97,3 @@ export const DataRealTimeMonitor = <T extends { id: string }>({
     </Card>
   );
 };
-
