@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { PostgrestError } from '@supabase/supabase-js';
@@ -41,15 +40,13 @@ export function useSupabaseCrud<T extends { id: string }>(
       setLoading(true);
       setError(null);
       
-      // First create the query builder
-      let query = supabase.from(table).select(select);
+      // Create a basic query without type complexity
+      const queryBuilder = supabase.from(table).select(select);
       
-      // Add the user_id filter conditionally
-      if (userId !== null && userId !== undefined) {
-        query = query.eq('user_id', userId);
-      }
-      
-      const { data: result, error: supabaseError } = await query;
+      // Conditionally apply the user_id filter
+      const { data: result, error: supabaseError } = userId !== null && userId !== undefined 
+        ? await queryBuilder.eq('user_id', userId)
+        : await queryBuilder;
       
       if (supabaseError) {
         setError(supabaseError);
@@ -60,7 +57,8 @@ export function useSupabaseCrud<T extends { id: string }>(
           description: supabaseError.message || `Failed to load ${String(table)}`
         });
       } else {
-        setData(result as unknown as T[]);
+        // Cast the result with a more direct approach to avoid deep type instantiation
+        setData(result as any);
       }
     } catch (err: any) {
       setError(err);
