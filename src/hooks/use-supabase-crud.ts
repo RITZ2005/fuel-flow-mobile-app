@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { PostgrestError } from '@supabase/supabase-js';
@@ -39,10 +40,11 @@ export function useSupabaseCrud<T extends { id: string }>(
       setLoading(true);
       setError(null);
       
-      let query = supabase.from(table).select(select);
+      // Use type assertion with "as const" to fix the infinite type instantiation issue
+      const query = supabase.from(table as ValidTableName).select(select);
       
       if (userId) {
-        query = query.eq('user_id', userId);
+        query.eq('user_id', userId);
       }
       
       const { data: result, error: supabaseError } = await query;
@@ -56,7 +58,8 @@ export function useSupabaseCrud<T extends { id: string }>(
           description: supabaseError.message || `Failed to load ${String(table)}`
         });
       } else {
-        setData(result as T[]);
+        // Properly cast the result to avoid type errors
+        setData(result as unknown as T[]);
       }
     } catch (err: any) {
       setError(err);
@@ -79,16 +82,13 @@ export function useSupabaseCrud<T extends { id: string }>(
 
   const create = async (newData: Omit<T, 'id'>) => {
     try {
-      // Cast table to string to make TypeScript happy with the Supabase API
-      const tableStr = table as string;
-      
       const { data: result, error: supabaseError } = await supabase
-        .from(tableStr as any)
+        .from(table as ValidTableName)
         .insert(newData)
         .select();
       
       if (supabaseError) {
-        console.error(`Error creating ${tableStr}:`, supabaseError);
+        console.error(`Error creating ${table}:`, supabaseError);
         toast({
           variant: "destructive",
           title: "Error",
@@ -124,17 +124,14 @@ export function useSupabaseCrud<T extends { id: string }>(
 
   const update = async (id: string, updateData: Partial<T>) => {
     try {
-      // Cast table to string to make TypeScript happy with the Supabase API
-      const tableStr = table as string;
-      
       const { data: result, error: supabaseError } = await supabase
-        .from(tableStr as any)
+        .from(table as ValidTableName)
         .update(updateData)
         .eq('id', id)
         .select();
       
       if (supabaseError) {
-        console.error(`Error updating ${tableStr}:`, supabaseError);
+        console.error(`Error updating ${table}:`, supabaseError);
         toast({
           variant: "destructive",
           title: "Error",
@@ -167,16 +164,13 @@ export function useSupabaseCrud<T extends { id: string }>(
 
   const remove = async (id: string) => {
     try {
-      // Cast table to string to make TypeScript happy with the Supabase API
-      const tableStr = table as string;
-      
       const { error: supabaseError } = await supabase
-        .from(tableStr as any)
+        .from(table as ValidTableName)
         .delete()
         .eq('id', id);
       
       if (supabaseError) {
-        console.error(`Error deleting ${tableStr}:`, supabaseError);
+        console.error(`Error deleting ${table}:`, supabaseError);
         toast({
           variant: "destructive",
           title: "Error",
