@@ -1,13 +1,16 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { MapPin, Search, Loader2 } from 'lucide-react';
+import { MapPin, Search, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import MobileLayout from '@/components/layout/MobileLayout';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tables } from '@/integrations/supabase/types';
+import { Button } from '@/components/ui/button';
 import StationCard from '@/components/stations/StationCard';
 import { useSupabase } from '@/hooks/use-supabase';
+import AddStationForm from '@/components/stations/AddStationForm';
+import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 
 type Station = Tables<'stations'>;
 
@@ -70,15 +73,29 @@ const Stations = () => {
   return (
     <MobileLayout title="CNG Stations">
       <div className="px-4 py-3">
-        <div className="relative mb-4">
-          <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
-          <Input
-            type="text"
-            placeholder="Search stations by name or location"
-            className="pl-10"
-            value={searchQuery}
-            onChange={handleSearchChange}
-          />
+        <div className="flex items-center justify-between mb-4">
+          <div className="relative flex-1 mr-2">
+            <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+            <Input
+              type="text"
+              placeholder="Search stations by name or location"
+              className="pl-10"
+              value={searchQuery}
+              onChange={handleSearchChange}
+            />
+          </div>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="h-4 w-4 mr-1" />
+                Add Station
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <h2 className="text-lg font-semibold mb-4">Add New Station</h2>
+              <AddStationForm />
+            </DialogContent>
+          </Dialog>
         </div>
         
         {loading ? (

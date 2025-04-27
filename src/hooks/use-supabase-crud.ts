@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { PostgrestError } from '@supabase/supabase-js';
@@ -40,22 +39,20 @@ export function useSupabaseCrud<T extends { id: string }>(
     try {
       setLoading(true);
       setError(null);
-      
-      // Simplify the query and type handling
-      const query = supabase.from(table).select(select);
-      
-      // Execute the query with or without the user_id filter
-      let result, supabaseError;
-      
-      if (userId !== null && userId !== undefined) {
-        const response = await query.eq('user_id', userId);
-        result = response.data;
-        supabaseError = response.error;
-      } else {
-        const response = await query;
-        result = response.data;
-        supabaseError = response.error;
-      }
+
+      const query = supabase.from(table);
+      const { data: result, error: supabaseError } = await query
+        .select(select)
+        .order('created_at', { ascending: false })
+        .then(res => {
+          if (userId !== null && userId !== undefined) {
+            return { 
+              data: res.data?.filter(row => (row as any).user_id === userId) || null,
+              error: res.error
+            };
+          }
+          return res;
+        });
       
       if (supabaseError) {
         setError(supabaseError);
@@ -66,7 +63,6 @@ export function useSupabaseCrud<T extends { id: string }>(
           description: supabaseError.message || `Failed to load ${String(table)}`
         });
       } else {
-        // Use a simple type assertion to avoid deep type instantiation
         setData(result as T[]);
       }
     } catch (err: any) {
@@ -75,7 +71,7 @@ export function useSupabaseCrud<T extends { id: string }>(
       toast({
         variant: "destructive",
         title: "Error",
-        description: err.message || `An unexpected error occurred while fetching ${String(table)}`
+        description: err.message || `An unexpected error occurred`
       });
     } finally {
       setLoading(false);
