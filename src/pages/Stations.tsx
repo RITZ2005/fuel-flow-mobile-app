@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { MapPin, Search, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import MobileLayout from '@/components/layout/MobileLayout';
@@ -33,7 +33,8 @@ const Stations = () => {
   const [filteredStations, setFilteredStations] = useState<Station[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   
-  useEffect(() => {
+  // Use useCallback for filtering to prevent unnecessary re-renders
+  const filterStations = useCallback(() => {
     if (!stations) return;
     
     if (searchQuery.trim() === '') {
@@ -45,16 +46,26 @@ const Stations = () => {
     const filtered = stations.filter(station => 
       station.name.toLowerCase().includes(query) || 
       station.address.toLowerCase().includes(query) ||
-      station.city.toLowerCase().includes(query) ||
-      station.state.toLowerCase().includes(query)
+      station.city?.toLowerCase().includes(query) ||
+      station.state?.toLowerCase().includes(query)
     );
     
     setFilteredStations(filtered);
-  }, [searchQuery, stations]);
+  }, [stations, searchQuery]);
+  
+  // Only run the filter when stations or searchQuery changes
+  useEffect(() => {
+    filterStations();
+  }, [filterStations]);
   
   if (error) {
     console.error("Error loading stations:", error);
   }
+  
+  // Handle search input changes
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
   
   return (
     <MobileLayout title="CNG Stations">
@@ -66,7 +77,7 @@ const Stations = () => {
             placeholder="Search stations by name or location"
             className="pl-10"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={handleSearchChange}
           />
         </div>
         

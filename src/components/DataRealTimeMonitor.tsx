@@ -28,10 +28,11 @@ export const DataRealTimeMonitor = <T extends { id: string }>({
     event: '*'
   });
   
+  // Use useEffect to handle realtime updates
   useEffect(() => {
     if (realtimeData) {
       setLastUpdate(new Date().toLocaleTimeString());
-      fetch();
+      fetch(); // This will cause a refetch of the data when we get a realtime update
     }
   }, [realtimeData, fetch]);
 

@@ -1,5 +1,4 @@
-
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { PostgrestError } from '@supabase/supabase-js';
 import { useToast } from './use-toast';
@@ -35,7 +34,8 @@ export function useSupabaseCrud<T extends { id: string }>(
 
   const { select = '*', userId = null } = options;
 
-  const fetch = async () => {
+  // Use useCallback to prevent the fetch function from being recreated on every render
+  const fetch = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -57,7 +57,7 @@ export function useSupabaseCrud<T extends { id: string }>(
         toast({
           variant: "destructive",
           title: `Error Loading Data`,
-          description: supabaseError.message || `Failed to load ${tableStr}`
+          description: supabaseError.message || `Failed to load ${String(table)}`
         });
       } else {
         setData(result as unknown as T[]);
@@ -73,8 +73,16 @@ export function useSupabaseCrud<T extends { id: string }>(
     } finally {
       setLoading(false);
     }
-  };
+  }, [table, select, userId, toast]);
 
+  // Move the initial fetch to useEffect to prevent it from running on every render
+  useEffect(() => {
+    if (options.initialFetch !== false) {
+      fetch();
+    }
+  }, [fetch, options.initialFetch]);
+
+  // Keep the rest of the CRUD operations
   const create = async (newData: Omit<T, 'id'>) => {
     try {
       // Cast table to string to make TypeScript happy with the Supabase API
@@ -204,11 +212,6 @@ export function useSupabaseCrud<T extends { id: string }>(
       return { error: err };
     }
   };
-
-  // Initial fetch if initialFetch is true
-  if (options.initialFetch !== false) {
-    fetch();
-  }
 
   return {
     data,

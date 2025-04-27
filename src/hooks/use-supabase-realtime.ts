@@ -40,10 +40,14 @@ export function useSupabaseRealtime<T extends { id: string }>(props: UseSupabase
 
     setChannel(channel);
 
+    // Cleanup function to remove the channel when the component unmounts
     return () => {
-      supabase.removeChannel(channel);
+      if (channel) {
+        console.log('Removing realtime channel');
+        supabase.removeChannel(channel);
+      }
     };
-  }, [table, event, schema, filter]);
+  }, [table, event, schema, filter]); // Added dependencies array to only create channel when these values change
 
   return { data, channel };
 }
