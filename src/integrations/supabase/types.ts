@@ -249,42 +249,6 @@ export type Database = {
         }
         Relationships: []
       }
-      vehicless: {
-        Row: {
-          created_at: string | null
-          fuel_type: string
-          id: string
-          make: string
-          model: string
-          reg_number: string
-          updated_at: string | null
-          user_id: string
-          year: number
-        }
-        Insert: {
-          created_at?: string | null
-          fuel_type: string
-          id?: string
-          make: string
-          model: string
-          reg_number: string
-          updated_at?: string | null
-          user_id: string
-          year: number
-        }
-        Update: {
-          created_at?: string | null
-          fuel_type?: string
-          id?: string
-          make?: string
-          model?: string
-          reg_number?: string
-          updated_at?: string | null
-          user_id?: string
-          year?: number
-        }
-        Relationships: []
-      }
     }
     Views: {
       [_ in never]: never

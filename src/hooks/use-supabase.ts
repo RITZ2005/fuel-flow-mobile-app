@@ -3,33 +3,34 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { PostgrestError } from '@supabase/supabase-js';
 import { useToast } from './use-toast';
+import { Tables } from '@/integrations/supabase/types';
 
 // Define valid table names as a union type
 type TableName = 'stations' | 'time_slots' | 'vehicles' | 'bookings' | 'profiles' | 'updated_at';
 
-// Generic type for the data
-type SupabaseData = Record<string, any>;
+// Generic type for the data that matches our Database schema
+type GenericData<T = any> = T & { id: string };
 
-// Interface for the hook return value with simplified types
-interface SupabaseHookReturn {
-  data: SupabaseData[] | null;
+// Interface for the hook return value with proper typing
+interface SupabaseHookReturn<T = any> {
+  data: T[] | null;
   loading: boolean;
   error: PostgrestError | Error | null;
   fetch: () => Promise<void>;
-  create: (data: SupabaseData) => Promise<{ data: any; error: PostgrestError | Error | null }>;
-  update: (id: string, data: SupabaseData) => Promise<{ data: any; error: PostgrestError | Error | null }>;
+  create: (data: Omit<T, 'id'>) => Promise<{ data: T[] | null; error: PostgrestError | Error | null }>;
+  update: (id: string, data: Partial<T>) => Promise<{ data: T[] | null; error: PostgrestError | Error | null }>;
   remove: (id: string) => Promise<{ error: PostgrestError | Error | null }>;
 }
 
-export function useSupabase(
+export function useSupabase<T extends Record<string, any> = GenericData>(
   table: TableName,
   options: {
     select?: string;
     userId?: string | null;
     initialFetch?: boolean;
   } = {}
-): SupabaseHookReturn {
-  const [data, setData] = useState<SupabaseData[] | null>(null);
+): SupabaseHookReturn<T> {
+  const [data, setData] = useState<T[] | null>(null);
   const [loading, setLoading] = useState<boolean>(options.initialFetch !== false);
   const [error, setError] = useState<PostgrestError | Error | null>(null);
   const { toast } = useToast();
@@ -60,7 +61,7 @@ export function useSupabase(
           description: supabaseError.message || `Failed to load ${table}`
         });
       } else {
-        setData(result);
+        setData(result as T[]);
       }
     } catch (err: any) {
       setError(err);
@@ -76,11 +77,11 @@ export function useSupabase(
   };
 
   // Create function
-  const create = async (newData: SupabaseData) => {
+  const create = async (newData: Omit<T, 'id'>) => {
     try {
       const { data: result, error: supabaseError } = await supabase
         .from(table)
-        .insert(newData)
+        .insert(newData as any)
         .select();
       
       if (supabaseError) {
@@ -94,14 +95,20 @@ export function useSupabase(
       }
       
       // Update local data state
-      setData(prev => prev ? [...prev, ...result] : result);
+      setData(prev => {
+        const newArray = [...(prev || [])];
+        if (result) {
+          newArray.push(...(result as T[]));
+        }
+        return newArray;
+      });
       
       toast({
         title: "Success",
         description: `${table.charAt(0).toUpperCase() + table.slice(1, -1)} created successfully`
       });
       
-      return { data: result, error: null };
+      return { data: result as T[] | null, error: null };
     } catch (err: any) {
       console.error(`Exception in create ${table}:`, err);
       toast({
@@ -114,7 +121,7 @@ export function useSupabase(
   };
 
   // Update function
-  const update = async (id: string, updateData: SupabaseData) => {
+  const update = async (id: string, updateData: Partial<T>) => {
     try {
       const { data: result, error: supabaseError } = await supabase
         .from(table)
@@ -133,16 +140,17 @@ export function useSupabase(
       }
       
       // Update local data state
-      if (data) {
-        setData(data.map(item => (item.id === id ? { ...item, ...updateData } : item)));
-      }
+      setData(prevData => {
+        if (!prevData) return prevData;
+        return prevData.map(item => (item.id === id ? { ...item, ...updateData } : item));
+      });
       
       toast({
         title: "Success",
         description: `${table.charAt(0).toUpperCase() + table.slice(1, -1)} updated successfully`
       });
       
-      return { data: result, error: null };
+      return { data: result as T[] | null, error: null };
     } catch (err: any) {
       console.error(`Exception in update ${table}:`, err);
       toast({
@@ -173,9 +181,10 @@ export function useSupabase(
       }
       
       // Update local data state
-      if (data) {
-        setData(data.filter(item => item.id !== id));
-      }
+      setData(prevData => {
+        if (!prevData) return prevData;
+        return prevData.filter(item => item.id !== id);
+      });
       
       toast({
         title: "Success",
@@ -196,7 +205,7 @@ export function useSupabase(
 
   // Use useEffect for initial fetch to avoid potential infinite loops
   useEffect(() => {
-    if (initialFetch && !data && !error) {
+    if (initialFetch) {
       fetch();
     }
   }, []);
