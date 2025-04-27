@@ -1,19 +1,20 @@
 
 import React, { useEffect, useState } from 'react';
 import { Tables } from '@/integrations/supabase/types';
-import { useSupabase } from '@/hooks/use-supabase';
-import { useSupabaseRealtime } from '@/hooks/use-supabase-realtime';
+import { useSupabase, useSupabaseRealtime } from '@/hooks/use-supabase';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
 
+type TableName = keyof Tables<'public'>;
+
 interface DataRealTimeMonitorProps {
-  table: 'stations' | 'time_slots' | 'vehicles' | 'bookings' | 'profiles';
+  table: TableName;
   title: string;
   maxItems?: number;
 }
 
-export const DataRealTimeMonitor = <T extends Record<string, any>>({
+export const DataRealTimeMonitor = <T extends { id: string }>({
   table,
   title,
   maxItems = 5
@@ -21,7 +22,6 @@ export const DataRealTimeMonitor = <T extends Record<string, any>>({
   const { data: items, loading, error, fetch } = useSupabase<T>(table);
   const [lastUpdate, setLastUpdate] = useState<string | null>(null);
   
-  // Setup realtime subscription
   const { data: realtimeData } = useSupabaseRealtime<T>({
     table,
     event: '*'
@@ -30,7 +30,6 @@ export const DataRealTimeMonitor = <T extends Record<string, any>>({
   useEffect(() => {
     if (realtimeData) {
       setLastUpdate(new Date().toLocaleTimeString());
-      // Refresh the data when we get a realtime update
       fetch();
     }
   }, [realtimeData]);
@@ -94,3 +93,4 @@ export const DataRealTimeMonitor = <T extends Record<string, any>>({
     </Card>
   );
 };
+

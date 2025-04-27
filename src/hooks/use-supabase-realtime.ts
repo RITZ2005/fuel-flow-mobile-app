@@ -2,36 +2,28 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { RealtimeChannel } from '@supabase/supabase-js';
+import { Tables } from '@/integrations/supabase/types';
 
+type TableName = keyof Tables<'public'>;
 type RealtimeEvent = 'INSERT' | 'UPDATE' | 'DELETE' | '*';
 
 interface UseSupabaseRealtimeProps {
-  table: string;
+  table: TableName;
   event?: RealtimeEvent;
   schema?: string;
   filter?: string;
 }
 
-export function useSupabaseRealtime<T = any>({
-  table,
-  event = '*',
-  schema = 'public',
-  filter
-}: UseSupabaseRealtimeProps) {
+export function useSupabaseRealtime<T extends { id: string }>(props: UseSupabaseRealtimeProps) {
+  const { table, event = '*', schema = 'public', filter } = props;
   const [data, setData] = useState<T | null>(null);
   const [channel, setChannel] = useState<RealtimeChannel | null>(null);
 
   useEffect(() => {
-    // Setup the realtime subscription
-    const realtimeChannel = supabase.channel('schema-db-changes')
+    const channel = supabase.channel('schema-db-changes')
       .on(
         'postgres_changes',
-        {
-          event,
-          schema,
-          table,
-          filter
-        },
+        { event, schema, table, filter },
         (payload) => {
           console.log('Realtime update received:', payload);
           setData(payload.new as T);
@@ -41,13 +33,10 @@ export function useSupabaseRealtime<T = any>({
         console.log(`Realtime subscription status: ${status}`);
       });
 
-    setChannel(realtimeChannel);
+    setChannel(channel);
 
-    // Cleanup function
     return () => {
-      if (realtimeChannel) {
-        supabase.removeChannel(realtimeChannel);
-      }
+      supabase.removeChannel(channel);
     };
   }, [table, event, schema, filter]);
 
