@@ -40,11 +40,15 @@ export function useSupabaseCrud<T extends { id: string }>(
       setLoading(true);
       setError(null);
       
-      // Fix: Use a string literal for the table name, not as ValidTableName
-      const { data: result, error: supabaseError } = await supabase
-        .from(table)
-        .select(select)
-        .conditionalFilter('user_id', userId);
+      // Use a simple approach without extending the prototype
+      let query = supabase.from(table).select(select);
+      
+      // Add the user_id filter conditionally
+      if (userId !== null && userId !== undefined) {
+        query = query.eq('user_id', userId);
+      }
+      
+      const { data: result, error: supabaseError } = await query;
       
       if (supabaseError) {
         setError(supabaseError);
@@ -206,42 +210,5 @@ export function useSupabaseCrud<T extends { id: string }>(
     create,
     update,
     remove
-  };
-}
-
-// Helper extension for the Supabase QueryBuilder
-declare global {
-  interface PostgrestFilterBuilder<T> {
-    conditionalFilter: (column: string, value: any) => PostgrestFilterBuilder<T>;
-  }
-}
-
-// Add a conditional filter method to the Supabase QueryBuilder prototype
-if (typeof window !== 'undefined') {
-  const originalFrom = supabase.from.bind(supabase);
-  
-  supabase.from = function(table) {
-    const builder = originalFrom(table);
-    
-    if (builder && typeof builder === 'object') {
-      const originalSelect = builder.select.bind(builder);
-      
-      builder.select = function(columns) {
-        const filterBuilder = originalSelect(columns);
-        
-        if (filterBuilder && typeof filterBuilder === 'object' && !filterBuilder.conditionalFilter) {
-          filterBuilder.conditionalFilter = function(column, value) {
-            if (value !== undefined && value !== null) {
-              return this.eq(column, value);
-            }
-            return this;
-          };
-        }
-        
-        return filterBuilder;
-      };
-    }
-    
-    return builder;
   };
 }
