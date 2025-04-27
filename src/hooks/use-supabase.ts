@@ -1,33 +1,35 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { PostgrestError } from '@supabase/supabase-js';
 import { useToast } from './use-toast';
-import { Tables } from '@/integrations/supabase/types';
 
 // Define valid table names as a union type
 type TableName = 'stations' | 'time_slots' | 'vehicles' | 'bookings' | 'profiles' | 'updated_at';
 
-// Use a simpler return type structure with basic types
-interface SupabaseHookReturn<T> {
-  data: T[] | null;
+// Generic type for the data
+type SupabaseData = Record<string, any>;
+
+// Interface for the hook return value with simplified types
+interface SupabaseHookReturn {
+  data: SupabaseData[] | null;
   loading: boolean;
   error: PostgrestError | Error | null;
   fetch: () => Promise<void>;
-  create: (data: Record<string, any>) => Promise<{ data: any; error: PostgrestError | Error | null }>;
-  update: (id: string, data: Record<string, any>) => Promise<{ data: any; error: PostgrestError | Error | null }>;
+  create: (data: SupabaseData) => Promise<{ data: any; error: PostgrestError | Error | null }>;
+  update: (id: string, data: SupabaseData) => Promise<{ data: any; error: PostgrestError | Error | null }>;
   remove: (id: string) => Promise<{ error: PostgrestError | Error | null }>;
 }
 
-export function useSupabase<T>(
+export function useSupabase(
   table: TableName,
   options: {
     select?: string;
     userId?: string | null;
     initialFetch?: boolean;
   } = {}
-): SupabaseHookReturn<T> {
-  const [data, setData] = useState<T[] | null>(null);
+): SupabaseHookReturn {
+  const [data, setData] = useState<SupabaseData[] | null>(null);
   const [loading, setLoading] = useState<boolean>(options.initialFetch !== false);
   const [error, setError] = useState<PostgrestError | Error | null>(null);
   const { toast } = useToast();
@@ -58,7 +60,7 @@ export function useSupabase<T>(
           description: supabaseError.message || `Failed to load ${table}`
         });
       } else {
-        setData(result as T[]);
+        setData(result);
       }
     } catch (err: any) {
       setError(err);
@@ -74,7 +76,7 @@ export function useSupabase<T>(
   };
 
   // Create function
-  const create = async (newData: Record<string, any>) => {
+  const create = async (newData: SupabaseData) => {
     try {
       const { data: result, error: supabaseError } = await supabase
         .from(table)
@@ -92,7 +94,7 @@ export function useSupabase<T>(
       }
       
       // Update local data state
-      setData(prev => prev ? [...prev, ...result as T[]] : result as T[]);
+      setData(prev => prev ? [...prev, ...result] : result);
       
       toast({
         title: "Success",
@@ -112,7 +114,7 @@ export function useSupabase<T>(
   };
 
   // Update function
-  const update = async (id: string, updateData: Record<string, any>) => {
+  const update = async (id: string, updateData: SupabaseData) => {
     try {
       const { data: result, error: supabaseError } = await supabase
         .from(table)
@@ -132,7 +134,7 @@ export function useSupabase<T>(
       
       // Update local data state
       if (data) {
-        setData(data.map(item => ((item as any).id === id ? { ...item, ...updateData } : item)));
+        setData(data.map(item => (item.id === id ? { ...item, ...updateData } : item)));
       }
       
       toast({
@@ -172,7 +174,7 @@ export function useSupabase<T>(
       
       // Update local data state
       if (data) {
-        setData(data.filter(item => ((item as any).id !== id)));
+        setData(data.filter(item => item.id !== id));
       }
       
       toast({
@@ -192,15 +194,12 @@ export function useSupabase<T>(
     }
   };
 
-  // Fetch data on initial render if initialFetch is true
-  // Using a more direct approach to avoid typing issues
-  if (initialFetch && !data && !loading && !error) {
-    // This will only run once after the first render
-    const initialLoad = async () => {
-      await fetch();
-    };
-    initialLoad();
-  }
+  // Use useEffect for initial fetch to avoid potential infinite loops
+  useEffect(() => {
+    if (initialFetch && !data && !error) {
+      fetch();
+    }
+  }, []);
 
   return {
     data,

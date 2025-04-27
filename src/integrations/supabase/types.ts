@@ -220,8 +220,10 @@ export type Database = {
           id: string
           make: string
           model: string
-          reg_number: number | null
+          reg_number: string | null
+          updated_at: string | null
           user_id: string
+          year: number | null
         }
         Insert: {
           created_at?: string | null
@@ -229,8 +231,10 @@ export type Database = {
           id?: string
           make: string
           model: string
-          reg_number?: number | null
+          reg_number?: string | null
+          updated_at?: string | null
           user_id: string
+          year?: number | null
         }
         Update: {
           created_at?: string | null
@@ -238,8 +242,46 @@ export type Database = {
           id?: string
           make?: string
           model?: string
-          reg_number?: number | null
+          reg_number?: string | null
+          updated_at?: string | null
           user_id?: string
+          year?: number | null
+        }
+        Relationships: []
+      }
+      vehicless: {
+        Row: {
+          created_at: string | null
+          fuel_type: string
+          id: string
+          make: string
+          model: string
+          reg_number: string
+          updated_at: string | null
+          user_id: string
+          year: number
+        }
+        Insert: {
+          created_at?: string | null
+          fuel_type: string
+          id?: string
+          make: string
+          model: string
+          reg_number: string
+          updated_at?: string | null
+          user_id: string
+          year: number
+        }
+        Update: {
+          created_at?: string | null
+          fuel_type?: string
+          id?: string
+          make?: string
+          model?: string
+          reg_number?: string
+          updated_at?: string | null
+          user_id?: string
+          year?: number
         }
         Relationships: []
       }
