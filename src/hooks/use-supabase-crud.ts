@@ -34,16 +34,12 @@ export function useSupabaseCrud<T extends { id: string }>(
 
   const { select = '*', userId = null } = options;
 
-  // Use useCallback to prevent the fetch function from being recreated on every render
   const fetch = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
       
-      // Cast table to string to make TypeScript happy with the Supabase API
-      const tableStr = table as string;
-      
-      let query = supabase.from(tableStr as any).select(select);
+      let query = supabase.from(table).select(select);
       
       if (userId) {
         query = query.eq('user_id', userId);
@@ -53,14 +49,14 @@ export function useSupabaseCrud<T extends { id: string }>(
       
       if (supabaseError) {
         setError(supabaseError);
-        console.error(`Error fetching ${tableStr}:`, supabaseError);
+        console.error(`Error fetching ${table}:`, supabaseError);
         toast({
           variant: "destructive",
           title: `Error Loading Data`,
           description: supabaseError.message || `Failed to load ${String(table)}`
         });
       } else {
-        setData(result as unknown as T[]);
+        setData(result as T[]);
       }
     } catch (err: any) {
       setError(err);
@@ -75,14 +71,12 @@ export function useSupabaseCrud<T extends { id: string }>(
     }
   }, [table, select, userId, toast]);
 
-  // Move the initial fetch to useEffect to prevent it from running on every render
   useEffect(() => {
     if (options.initialFetch !== false) {
       fetch();
     }
   }, [fetch, options.initialFetch]);
 
-  // Keep the rest of the CRUD operations
   const create = async (newData: Omit<T, 'id'>) => {
     try {
       // Cast table to string to make TypeScript happy with the Supabase API
