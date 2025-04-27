@@ -7,6 +7,7 @@ import { Database } from '@/integrations/supabase/types';
 
 // Define valid table names from the Database type
 type ValidTableName = keyof Database['public']['Tables'];
+type TableRow<T extends ValidTableName> = Database['public']['Tables'][T]['Row'];
 
 interface UseSupabaseCrudOptions {
   select?: string;
@@ -40,7 +41,7 @@ export function useSupabaseCrud<T extends { id: string }>(
       setLoading(true);
       setError(null);
       
-      // Use a simple approach without extending the prototype
+      // First create the query builder
       let query = supabase.from(table).select(select);
       
       // Add the user_id filter conditionally
@@ -59,7 +60,6 @@ export function useSupabaseCrud<T extends { id: string }>(
           description: supabaseError.message || `Failed to load ${String(table)}`
         });
       } else {
-        // Properly cast the result to avoid type errors
         setData(result as unknown as T[]);
       }
     } catch (err: any) {
