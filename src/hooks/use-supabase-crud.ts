@@ -1,28 +1,9 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { PostgrestError } from '@supabase/supabase-js';
 import { useToast } from './use-toast';
-import { Database } from '@/integrations/supabase/types';
-
-// Define valid table names from the Database type
-type ValidTableName = keyof Database['public']['Tables'];
-type TableRow<T extends ValidTableName> = Database['public']['Tables'][T]['Row'];
-
-interface UseSupabaseCrudOptions {
-  select?: string;
-  userId?: string | null;
-  initialFetch?: boolean;
-}
-
-interface UseSupabaseCrudReturn<T> {
-  data: T[] | null;
-  loading: boolean;
-  error: PostgrestError | Error | null;
-  fetch: () => Promise<void>;
-  create: (data: Omit<T, 'id'>) => Promise<{ data: T[] | null; error: PostgrestError | Error | null }>;
-  update: (id: string, data: Partial<T>) => Promise<{ data: T[] | null; error: PostgrestError | Error | null }>;
-  remove: (id: string) => Promise<{ error: PostgrestError | Error | null }>;
-}
+import { ValidTableName, UseSupabaseCrudOptions, UseSupabaseCrudReturn } from './types/supabase-types';
+import { createRecord, updateRecord, removeRecord } from './utils/supabase-operations';
 
 export function useSupabaseCrud<T extends { id: string }>(
   table: ValidTableName,
@@ -30,7 +11,7 @@ export function useSupabaseCrud<T extends { id: string }>(
 ): UseSupabaseCrudReturn<T> {
   const [data, setData] = useState<T[] | null>(null);
   const [loading, setLoading] = useState<boolean>(options.initialFetch !== false);
-  const [error, setError] = useState<PostgrestError | Error | null>(null);
+  const [error, setError] = useState<any>(null);
   const { toast } = useToast();
 
   const { select = '*', userId = null } = options;
@@ -42,12 +23,10 @@ export function useSupabaseCrud<T extends { id: string }>(
 
       let query = supabase.from(table).select(select);
       
-      // Apply user filter if provided
       if (userId !== null && userId !== undefined) {
         query = query.eq('user_id', userId);
       }
       
-      // Execute query and order by creation date
       const { data: result, error: supabaseError } = await query.order('created_at', { ascending: false });
       
       if (supabaseError) {
@@ -59,7 +38,6 @@ export function useSupabaseCrud<T extends { id: string }>(
           description: supabaseError.message || `Failed to load ${String(table)}`
         });
       } else {
-        // Use type assertion safely after checking for errors
         setData(result as unknown as T[]);
       }
     } catch (err: any) {
@@ -82,124 +60,37 @@ export function useSupabaseCrud<T extends { id: string }>(
   }, [fetch, options.initialFetch]);
 
   const create = async (newData: Omit<T, 'id'>) => {
-    try {
-      const { data: result, error: supabaseError } = await supabase
-        .from(table)
-        .insert(newData)
-        .select();
-      
-      if (supabaseError) {
-        console.error(`Error creating ${table}:`, supabaseError);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: supabaseError.message || `Failed to create new ${String(table).slice(0, -1)}`
-        });
-        return { data: null, error: supabaseError };
-      }
-      
+    const result = await createRecord<T>(table, newData, toast);
+    if (result.data) {
       setData(prev => {
         const newArray = [...(prev || [])];
-        if (result) {
-          newArray.push(...(result as unknown as T[]));
-        }
+        newArray.push(...result.data!);
         return newArray;
       });
-      
-      toast({
-        title: "Success",
-        description: `${String(table).charAt(0).toUpperCase() + String(table).slice(1, -1)} created successfully`
-      });
-      
-      return { data: result as unknown as T[] | null, error: null };
-    } catch (err: any) {
-      console.error(`Exception in create ${String(table)}:`, err);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: err.message || `An unexpected error occurred`
-      });
-      return { data: null, error: err };
     }
+    return result;
   };
 
   const update = async (id: string, updateData: Partial<T>) => {
-    try {
-      const { data: result, error: supabaseError } = await supabase
-        .from(table)
-        .update(updateData)
-        .eq('id', id)
-        .select();
-      
-      if (supabaseError) {
-        console.error(`Error updating ${table}:`, supabaseError);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: supabaseError.message || `Failed to update ${String(table).slice(0, -1)}`
-        });
-        return { data: null, error: supabaseError };
-      }
-      
+    const result = await updateRecord<T>(table, id, updateData, toast);
+    if (result.data) {
       setData(prevData => {
         if (!prevData) return prevData;
         return prevData.map(item => (item.id === id ? { ...item, ...updateData } : item));
       });
-      
-      toast({
-        title: "Success",
-        description: `${String(table).charAt(0).toUpperCase() + String(table).slice(1, -1)} updated successfully`
-      });
-      
-      return { data: result as unknown as T[] | null, error: null };
-    } catch (err: any) {
-      console.error(`Exception in update ${String(table)}:`, err);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: err.message || `An unexpected error occurred`
-      });
-      return { data: null, error: err };
     }
+    return result;
   };
 
   const remove = async (id: string) => {
-    try {
-      const { error: supabaseError } = await supabase
-        .from(table)
-        .delete()
-        .eq('id', id);
-      
-      if (supabaseError) {
-        console.error(`Error deleting ${table}:`, supabaseError);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: supabaseError.message || `Failed to delete ${String(table).slice(0, -1)}`
-        });
-        return { error: supabaseError };
-      }
-      
+    const result = await removeRecord(table, id, toast);
+    if (!result.error) {
       setData(prevData => {
         if (!prevData) return prevData;
         return prevData.filter(item => item.id !== id);
       });
-      
-      toast({
-        title: "Success",
-        description: `${String(table).charAt(0).toUpperCase() + String(table).slice(1, -1)} deleted successfully`
-      });
-      
-      return { error: null };
-    } catch (err: any) {
-      console.error(`Exception in delete ${String(table)}:`, err);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: err.message || `An unexpected error occurred`
-      });
-      return { error: err };
     }
+    return result;
   };
 
   return {
