@@ -87,7 +87,7 @@ const AddStationForm = () => {
           {...register('latitude', { 
             required: true,
             min: -90,
-            max: 90
+            max: 90,
           })} 
         />
         {errors.latitude && <p className="text-sm text-red-500">Valid latitude is required (-90 to 90)</p>}

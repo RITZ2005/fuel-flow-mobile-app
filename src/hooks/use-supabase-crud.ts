@@ -64,7 +64,7 @@ export function useSupabaseCrud<T extends { id: string }>(
     if (result.data) {
       setData(prev => {
         const newArray = [...(prev || [])];
-        newArray.push(...result.data!);
+        newArray.unshift(...result.data!);
         return newArray;
       });
     }
