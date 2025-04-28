@@ -1,49 +1,143 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import MobileLayout from '@/components/layout/MobileLayout';
 import BookingCard from '@/components/dashboard/BookingCard';
 import { CalendarClock } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+
+interface Booking {
+  id: string;
+  station_id: string;
+  station_name?: string;
+  station_address?: string;
+  booking_date: string;
+  booking_time: string;
+  status: 'upcoming' | 'completed' | 'cancelled';
+}
 
 const Bookings = () => {
-  // Mock bookings data
-  const [bookings, setBookings] = useState([
-    {
-      id: '1',
-      stationName: 'CNG Central Station',
-      stationAddress: '123 Main St, City',
-      date: 'Apr 12, 2025',
-      time: '10:30 AM',
-      status: 'upcoming' as const,
-    },
-    {
-      id: '2',
-      stationName: 'Green Fuel Station',
-      stationAddress: '456 Park Ave, City',
-      date: 'Apr 10, 2025',
-      time: '2:15 PM',
-      status: 'completed' as const,
-    },
-    {
-      id: '3',
-      stationName: 'EcoFill CNG Station',
-      stationAddress: '789 Lake Rd, City',
-      date: 'Apr 8, 2025',
-      time: '11:45 AM',
-      status: 'cancelled' as const,
-    },
-  ]);
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
   
-  const cancelBooking = (id: string) => {
-    setBookings(bookings.map(booking => 
-      booking.id === id 
-        ? { ...booking, status: 'cancelled' as const } 
-        : booking
-    ));
+  useEffect(() => {
+    const fetchBookings = async () => {
+      try {
+        setLoading(true);
+        
+        // Get current user
+        const { data: authData } = await supabase.auth.getUser();
+        if (!authData?.user?.id) return;
+        
+        // Get bookings
+        const { data, error } = await supabase
+          .from('bookings')
+          .select(`
+            id, 
+            booking_date, 
+            booking_time, 
+            status,
+            station_id,
+            stations (
+              name, 
+              address
+            )
+          `)
+          .eq('user_id', authData.user.id)
+          .order('booking_date', { ascending: false });
+        
+        if (error) throw error;
+        
+        // Format bookings data
+        const formattedBookings = data.map((booking: any) => ({
+          id: booking.id,
+          station_id: booking.station_id,
+          station_name: booking.stations?.name || 'Unknown Station',
+          station_address: booking.stations?.address || '',
+          booking_date: formatDate(booking.booking_date),
+          booking_time: formatTime(booking.booking_time),
+          status: booking.status
+        }));
+        
+        setBookings(formattedBookings);
+      } catch (error: any) {
+        console.error("Error fetching bookings:", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load bookings"
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchBookings();
+  }, [toast]);
+  
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
+  
+  const formatTime = (timeString: string) => {
+    // Convert 24h time to 12h format
+    if (!timeString) return '';
+    
+    const [hours, minutes] = timeString.split(':').map(Number);
+    const period = hours >= 12 ? 'PM' : 'AM';
+    const formattedHours = hours % 12 || 12;
+    
+    return `${formattedHours}:${minutes.toString().padStart(2, '0')} ${period}`;
+  };
+  
+  const cancelBooking = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('bookings')
+        .update({ status: 'cancelled' })
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      setBookings(bookings.map(booking => 
+        booking.id === id 
+          ? { ...booking, status: 'cancelled' as const } 
+          : booking
+      ));
+      
+      toast({
+        title: "Booking Cancelled",
+        description: "Your booking has been cancelled successfully"
+      });
+    } catch (error: any) {
+      console.error("Error cancelling booking:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to cancel booking"
+      });
+    }
   };
   
   // Filter bookings by status
   const upcomingBookings = bookings.filter(booking => booking.status === 'upcoming');
   const pastBookings = bookings.filter(booking => booking.status === 'completed' || booking.status === 'cancelled');
+  
+  if (loading) {
+    return (
+      <MobileLayout title="My Bookings">
+        <div className="pt-2 pb-6 flex justify-center items-center h-[60vh]">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cng-primary"></div>
+        </div>
+      </MobileLayout>
+    );
+  }
   
   return (
     <MobileLayout title="My Bookings">
@@ -55,10 +149,10 @@ const Bookings = () => {
             <BookingCard 
               key={booking.id}
               id={booking.id}
-              stationName={booking.stationName}
-              stationAddress={booking.stationAddress}
-              date={booking.date}
-              time={booking.time}
+              stationName={booking.station_name || ''}
+              stationAddress={booking.station_address || ''}
+              date={booking.booking_date}
+              time={booking.booking_time}
               status={booking.status}
               onCancel={cancelBooking}
             />
@@ -80,10 +174,10 @@ const Bookings = () => {
               <BookingCard 
                 key={booking.id}
                 id={booking.id}
-                stationName={booking.stationName}
-                stationAddress={booking.stationAddress}
-                date={booking.date}
-                time={booking.time}
+                stationName={booking.station_name || ''}
+                stationAddress={booking.station_address || ''}
+                date={booking.booking_date}
+                time={booking.booking_time}
                 status={booking.status}
               />
             ))}

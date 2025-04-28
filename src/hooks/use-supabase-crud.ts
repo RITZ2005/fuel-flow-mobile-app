@@ -40,19 +40,15 @@ export function useSupabaseCrud<T extends { id: string }>(
       setLoading(true);
       setError(null);
 
-      const query = supabase.from(table);
-      const { data: result, error: supabaseError } = await query
-        .select(select)
-        .order('created_at', { ascending: false })
-        .then(res => {
-          if (userId !== null && userId !== undefined) {
-            return { 
-              data: res.data?.filter(row => (row as any).user_id === userId) || null,
-              error: res.error
-            };
-          }
-          return res;
-        });
+      let query = supabase.from(table).select(select);
+      
+      // Apply user filter if provided
+      if (userId !== null && userId !== undefined) {
+        query = query.eq('user_id', userId);
+      }
+      
+      // Execute query and order by creation date
+      const { data: result, error: supabaseError } = await query.order('created_at', { ascending: false });
       
       if (supabaseError) {
         setError(supabaseError);
@@ -63,7 +59,8 @@ export function useSupabaseCrud<T extends { id: string }>(
           description: supabaseError.message || `Failed to load ${String(table)}`
         });
       } else {
-        setData(result as T[]);
+        // Use type assertion safely after checking for errors
+        setData(result as unknown as T[]);
       }
     } catch (err: any) {
       setError(err);

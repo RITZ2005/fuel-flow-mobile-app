@@ -215,33 +215,45 @@ export type Database = {
       }
       vehicles: {
         Row: {
+          cng_capacity: number | null
           created_at: string | null
           fuel_type: string | null
           id: string
+          license_plate: string | null
+          made: string | null
           make: string
           model: string
+          name: string | null
           reg_number: string | null
           updated_at: string | null
           user_id: string
           year: number | null
         }
         Insert: {
+          cng_capacity?: number | null
           created_at?: string | null
           fuel_type?: string | null
           id?: string
+          license_plate?: string | null
+          made?: string | null
           make: string
           model: string
+          name?: string | null
           reg_number?: string | null
           updated_at?: string | null
           user_id: string
           year?: number | null
         }
         Update: {
+          cng_capacity?: number | null
           created_at?: string | null
           fuel_type?: string | null
           id?: string
+          license_plate?: string | null
+          made?: string | null
           make?: string
           model?: string
+          name?: string | null
           reg_number?: string | null
           updated_at?: string | null
           user_id?: string
