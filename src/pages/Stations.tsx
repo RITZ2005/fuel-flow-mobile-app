@@ -116,6 +116,8 @@ const Stations = () => {
               rating={station.rating || 0}
               openTime={station.opening_time?.toString() || "08:00"}
               closeTime={station.closing_time?.toString() || "20:00"}
+              latitude={station.latitude ? Number(station.latitude) : undefined}
+              longitude={station.longitude ? Number(station.longitude) : undefined}
             />
           ))
         ) : (

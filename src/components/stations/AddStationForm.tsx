@@ -29,7 +29,9 @@ const AddStationForm = () => {
         is_active: true,
         created_by: userId || 'system',
         distance: 0,
-        rating: 0
+        rating: 0,
+        latitude: parseFloat(data.latitude as unknown as string),
+        longitude: parseFloat(data.longitude as unknown as string)
       });
 
       if (error) throw error;
@@ -74,6 +76,36 @@ const AddStationForm = () => {
         <Label htmlFor="state">State</Label>
         <Input id="state" {...register('state', { required: true })} />
         {errors.state && <p className="text-sm text-red-500">State is required</p>}
+      </div>
+
+      <div>
+        <Label htmlFor="latitude">Latitude</Label>
+        <Input 
+          id="latitude" 
+          type="number" 
+          step="any"
+          {...register('latitude', { 
+            required: true,
+            min: -90,
+            max: 90
+          })} 
+        />
+        {errors.latitude && <p className="text-sm text-red-500">Valid latitude is required (-90 to 90)</p>}
+      </div>
+
+      <div>
+        <Label htmlFor="longitude">Longitude</Label>
+        <Input 
+          id="longitude" 
+          type="number" 
+          step="any"
+          {...register('longitude', { 
+            required: true,
+            min: -180,
+            max: 180
+          })} 
+        />
+        {errors.longitude && <p className="text-sm text-red-500">Valid longitude is required (-180 to 180)</p>}
       </div>
 
       <div>

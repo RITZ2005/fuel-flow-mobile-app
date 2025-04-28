@@ -162,6 +162,7 @@ export type Database = {
       }
       time_slots: {
         Row: {
+          booked_count: number | null
           created_at: string | null
           date: string | null
           id: string
@@ -170,6 +171,7 @@ export type Database = {
           time: string | null
         }
         Insert: {
+          booked_count?: number | null
           created_at?: string | null
           date?: string | null
           id?: string
@@ -178,6 +180,7 @@ export type Database = {
           time?: string | null
         }
         Update: {
+          booked_count?: number | null
           created_at?: string | null
           date?: string | null
           id?: string

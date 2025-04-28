@@ -2,6 +2,7 @@
 import React from 'react';
 import { MapPin, Star, Clock, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import StationMap from './StationMap';
 
 interface StationCardProps {
   id: string;
@@ -13,8 +14,10 @@ interface StationCardProps {
   rating: number;
   openTime?: string;      
   closeTime?: string;     
-  availableSlots?: number; 
-  location?: string;      // For backward compatibility
+  availableSlots?: number;
+  location?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 const StationCard = ({
@@ -23,16 +26,17 @@ const StationCard = ({
   address,
   city,
   state,
-  distance = "1 km",  // Default value
+  distance = "1 km",
   rating,
-  openTime = "08:00", // Default value
-  closeTime = "20:00", // Default value
-  availableSlots = 5, // Default value
-  location
+  openTime = "08:00",
+  closeTime = "20:00",
+  availableSlots = 5,
+  location,
+  latitude,
+  longitude
 }: StationCardProps) => {
   const navigate = useNavigate();
   
-  // Display location string (either from props or constructed from city/state)
   const displayLocation = location || (city && state ? `${city}, ${state}` : city || '');
   
   return (
@@ -53,6 +57,12 @@ const StationCard = ({
           <span className="text-sm font-medium">{rating.toFixed(1)}</span>
         </div>
       </div>
+      
+      {latitude && longitude && (
+        <div className="mt-4">
+          <StationMap latitude={latitude} longitude={longitude} />
+        </div>
+      )}
       
       <div className="flex items-center mt-3 text-sm text-slate-500">
         <Clock size={14} className="mr-1" />
